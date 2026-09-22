@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Somiti (অগ্রযাত্রা সমবায় সমিতি) - ক্লাউড হিসাব পরিচালনা সফটওয়্যার</title>
-  <meta name="description" content="অগ্রযাত্রা সমবায় সমিতির সমন্বিত ক্লাউড হিসাব, সদস্য লেজার, কিস্তি আদায় এবং লভ্যাংশ বণ্টন সিস্টেম।" />
+  <title>Somiti (অগ্রযাত্রা সমবায় সমিতি) - সঞ্চয়, বিনিয়োগ ও ক্লাউড হিসাব সফটওয়্যার</title>
+  <meta name="description" content="অগ্রযাত্রা সঞ্চয় ও ঋণদান সমবায় সমিতি লিঃ এর সমন্বিত ক্লাউড হিসাব, সদস্য খতিয়ান বহি, কিস্তি আদায় এবং লভ্যাংশ বণ্টন সিস্টেম।" />
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -32,10 +32,13 @@
     }
   </script>
 
-  <!-- Google Fonts: Hind Siliguri for Bengali & Outfit for clean numbers -->
+  <!-- Google Fonts: Hind Siliguri for Bengali & Outfit for Numbers -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Chart.js for Dynamic Visual Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -60,7 +63,10 @@
         <p class="text-[10px] text-emerald-400">Somiti Cloud</p>
       </div>
     </div>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-1.5">
+      <button onclick="openModal('memberPortalModal')" class="bg-slate-800 p-2 rounded-lg text-emerald-400" title="সদস্য অনুসন্ধান">
+        <i data-lucide="search" class="w-4 h-4"></i>
+      </button>
       <button onclick="openModal('collectionModal')" class="bg-emerald-600 p-2 rounded-lg text-white" title="কিস্তি জমা">
         <i data-lucide="plus-circle" class="w-4 h-4"></i>
       </button>
@@ -98,7 +104,7 @@
 
         <button onclick="switchTab('members')" id="nav-members" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80 transition">
           <i data-lucide="users" class="w-5 h-5 text-blue-400"></i>
-          <span>সদস্য ও লেজার</span>
+          <span>সদস্য ও খতিয়ান বহি</span>
         </button>
 
         <button onclick="switchTab('collections')" id="nav-collections" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800/80 transition">
@@ -150,10 +156,10 @@
 
       <!-- Action Tools -->
       <div class="flex gap-2 pt-1">
-        <button onclick="exportDataJSON()" class="flex-1 py-1.5 px-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-center text-xs transition flex items-center justify-center gap-1">
-          <i data-lucide="download" class="w-3.5 h-3.5"></i> ব্যাকআপ
+        <button onclick="openModal('backupRestoreModal')" class="flex-1 py-1.5 px-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-center text-xs transition flex items-center justify-center gap-1" title="ব্যাকআপ ও রিস্টোর">
+          <i data-lucide="database" class="w-3.5 h-3.5"></i> ব্যাকআপ
         </button>
-        <button onclick="triggerCloudSeed()" class="py-1.5 px-2 bg-emerald-950/60 hover:bg-emerald-900 text-emerald-300 rounded text-center text-xs transition flex items-center justify-center gap-1" title="ক্লাউড ইনিশিয়ালাইজ">
+        <button onclick="triggerCloudSeed()" class="py-1.5 px-2 bg-emerald-950/60 hover:bg-emerald-900 text-emerald-300 rounded text-center text-xs transition flex items-center justify-center gap-1" title="ক্লাউড ডাটা ইনিশিয়ালাইজ">
           <i data-lucide="cloud-upload" class="w-3.5 h-3.5"></i> সিঙ্ক
         </button>
       </div>
@@ -163,24 +169,27 @@
   <!-- Main Content Area -->
   <main class="flex-1 flex flex-col min-w-0 overflow-y-auto bg-slate-100">
     <!-- Top Action Bar -->
-    <header class="no-print bg-white border-b border-slate-200 px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-10 shadow-sm">
+    <header class="no-print bg-white border-b border-slate-200 px-4 md:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-10 shadow-sm">
       <div>
         <h2 id="page-title" class="text-xl font-bold text-slate-800">ড্যাশবোর্ড ওভারভিউ</h2>
-        <p class="text-xs text-slate-500">অগ্রযাত্রা সমবায় সমিতির সমন্বিত ক্লাউড হিসাব পরিচালনা সফটওয়্যার</p>
+        <p class="text-xs text-slate-500">অগ্রযাত্রা সঞ্চয় ও ঋণদান সমবায় সমিতি লিঃ এর সমন্বিত ক্লাউড হিসাব সফটওয়্যার</p>
       </div>
 
-      <div class="flex items-center gap-2.5">
-        <button onclick="openModal('collectionModal')" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm shadow-emerald-600/30 transition">
+      <div class="flex items-center gap-2">
+        <button onclick="openModal('memberPortalModal')" class="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs md:text-sm font-semibold px-3 py-2 rounded-lg transition" title="সদস্য পাসবুক অনুসন্ধান">
+          <i data-lucide="search" class="w-4 h-4 text-emerald-600"></i>
+          <span>পাসবুক ভিউ</span>
+        </button>
+        <button onclick="openModal('collectionModal')" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs md:text-sm font-semibold px-3.5 py-2 rounded-lg shadow-sm shadow-emerald-600/30 transition">
           <i data-lucide="plus-circle" class="w-4 h-4"></i>
-          <span>কিস্তি জমা নিন</span>
+          <span>কিস্তি জমা</span>
         </button>
-        <button onclick="openModal('memberModal')" class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold px-3.5 py-2 rounded-lg transition">
+        <button onclick="openModal('memberModal')" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs md:text-sm font-semibold px-3 py-2 rounded-lg transition">
           <i data-lucide="user-plus" class="w-4 h-4"></i>
-          <span>নতুন সদস্য</span>
+          <span class="hidden sm:inline">নতুন সদস্য</span>
         </button>
-        <button onclick="window.print()" class="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold px-3 py-2 rounded-lg transition">
+        <button onclick="window.print()" class="inline-flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs md:text-sm font-semibold px-3 py-2 rounded-lg transition">
           <i data-lucide="printer" class="w-4 h-4"></i>
-          <span>প্রিন্ট</span>
         </button>
       </div>
     </header>
@@ -283,6 +292,35 @@
           </div>
         </div>
 
+        <!-- Interactive Visual Analytics Charts (NEW) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                <i data-lucide="pie-chart" class="w-4 h-4 text-emerald-600"></i>
+                তহবিলের বিশ্লেষণ ও স্থিতি (Fund Allocation)
+              </h3>
+              <span class="text-[11px] text-slate-400">লাইভ আপডেট</span>
+            </div>
+            <div class="chart-container">
+              <canvas id="fundAllocationChart"></canvas>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                <i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-600"></i>
+                মাসিক সঞ্চয় ও কিস্তি আদায় ট্রেন্ড (Monthly Flow)
+              </h3>
+              <span class="text-[11px] text-slate-400">টাকা (৳)</span>
+            </div>
+            <div class="chart-container">
+              <canvas id="collectionTrendChart"></canvas>
+            </div>
+          </div>
+        </div>
+
         <!-- Recent Activities and Top Members Section -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Member Quick Preview -->
@@ -346,23 +384,66 @@
         </div>
       </section>
 
-      <!-- View 2: Members -->
+      <!-- View 2: Members & Ledger -->
       <section id="view-members" class="hidden space-y-5">
-        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-5">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+          <!-- Header and Filter Controls -->
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-3 border-b border-slate-100">
             <div>
-              <h3 class="text-lg font-bold text-slate-800">সমিতির সদস্যদের তালিকা ও লেজার</h3>
+              <h3 class="text-lg font-bold text-slate-800">সদস্য খতিয়ান বহি ও পরিচালনা</h3>
               <p class="text-xs text-slate-500">প্রতিটি সদস্যের সঞ্চয়, শেয়ার এবং জমার সম্পূর্ণ ক্লাউড খতিয়ান</p>
             </div>
-            <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-              <input type="text" id="memberSearchInput" onkeyup="renderMembersTable()" placeholder="সদস্যের নাম বা মোবাইল খুঁজুন..." class="text-sm px-3.5 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none w-full md:w-64" />
-              <button onclick="openModal('memberModal')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-3.5 py-2 rounded-lg transition flex items-center gap-1.5">
+            <div class="flex flex-wrap items-center gap-2">
+              <!-- View Mode Toggles -->
+              <div class="flex bg-slate-100 p-1 rounded-xl">
+                <button id="btn-view-table" onclick="setMemberViewMode('table')" class="px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1">
+                  <i data-lucide="table" class="w-3.5 h-3.5"></i> টেবিল
+                </button>
+                <button id="btn-view-cards" onclick="setMemberViewMode('cards')" class="px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1">
+                  <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i> কার্ড ভিউ
+                </button>
+              </div>
+
+              <!-- Export CSV -->
+              <button onclick="exportMembersCSV()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-2 rounded-lg flex items-center gap-1 transition" title="এক্সেল ফরম্যাটে ডাউনলোড">
+                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600"></i>
+                <span>CSV এক্সপোর্ট</span>
+              </button>
+
+              <button onclick="openModal('memberModal')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs md:text-sm font-semibold px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow-sm">
                 <i data-lucide="plus" class="w-4 h-4"></i> নতুন সদস্য
               </button>
             </div>
           </div>
 
-          <div class="overflow-x-auto">
+          <!-- Search, Share Filter & Sort Toolbar -->
+          <div class="flex flex-col md:flex-row items-center justify-between gap-3 text-xs">
+            <div class="w-full md:w-80 relative">
+              <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+              <input type="text" id="memberSearchInput" onkeyup="renderMembersTable()" placeholder="সদস্যের নাম, কোড বা মোবাইল নম্বর খুঁজুন..." class="w-full pl-9 pr-3.5 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+              <!-- Share Category Filters -->
+              <div class="flex gap-1">
+                <button onclick="AppState.memberFilterShares = 'all'; renderMembersTable();" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded-md font-medium text-slate-700">সকল</button>
+                <button onclick="AppState.memberFilterShares = '1'; renderMembersTable();" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded-md font-medium text-slate-700">১ শেয়ার</button>
+                <button onclick="AppState.memberFilterShares = '2-3'; renderMembersTable();" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded-md font-medium text-slate-700">২-৩ শেয়ার</button>
+                <button onclick="AppState.memberFilterShares = '4+'; renderMembersTable();" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded-md font-medium text-slate-700">৪+ শেয়ার</button>
+              </div>
+
+              <!-- Sorting Dropdown -->
+              <select id="memberSortSelect" onchange="AppState.memberSortBy = this.value; renderMembersTable();" class="px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white text-slate-700 font-medium focus:ring-2 focus:ring-emerald-500">
+                <option value="id">সদস্য কোড (আইডি)</option>
+                <option value="name">নাম (অ-হ)</option>
+                <option value="shares">সর্বোচ্চ শেয়ার</option>
+                <option value="savings">সর্বোচ্চ সঞ্চয়</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Table View Container -->
+          <div id="members-table-container" class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-sm">
               <thead>
                 <tr class="bg-slate-50 text-slate-600 font-semibold text-xs border-y border-slate-200">
@@ -382,6 +463,11 @@
               </tbody>
             </table>
           </div>
+
+          <!-- Card Grid View Container -->
+          <div id="members-cards-container" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Dynamically populated card items -->
+          </div>
         </div>
       </section>
 
@@ -394,7 +480,7 @@
               <i data-lucide="badge-plus" class="w-5 h-5 text-emerald-600"></i>
               কিস্তি ও সঞ্চয় আদায় ফর্ম
             </h3>
-            <p class="text-xs text-slate-500 mb-4">সদস্যের সঞ্চয় ও ফি নিয়মিত ক্লাউডে এন্ট্রি করুন</p>
+            <p class="text-xs text-slate-500 mb-4">সদস্যের সঞ্চয় ও নিয়মিত কিস্তি ক্লাউডে এন্ট্রি করুন</p>
 
             <form id="collectionForm" onsubmit="handleSaveCollection(event)" class="space-y-3.5 text-sm">
               <div>
@@ -405,13 +491,20 @@
               </div>
 
               <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">তারিখ *</label>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-xs font-semibold text-slate-600">তারিখ *</label>
+                  <div class="flex gap-1">
+                    <button type="button" onclick="setQuickDate('collect-date', 'today')" class="quick-date-btn">আজ</button>
+                    <button type="button" onclick="setQuickDate('collect-date', 'yesterday')" class="quick-date-btn">গতকাল</button>
+                  </div>
+                </div>
                 <input type="date" id="collect-date" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
               </div>
 
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">সঞ্চয় জমার পরিমাণ (টাকা) *</label>
                 <input type="number" id="collect-amount" placeholder="যেমন: ১০০০" required min="1" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+                <p class="text-[11px] text-slate-400 mt-1">প্রতি শেয়ারে মাসিক ১,০০০ টাকা স্বয়ংক্রিয় হিসাব</p>
               </div>
 
               <div class="grid grid-cols-2 gap-3">
@@ -477,7 +570,7 @@
             <div>
               <span class="inline-block px-2.5 py-1 bg-emerald-500/20 text-emerald-300 text-xs font-bold rounded mb-2">শেয়ার ভিত্তিক লভ্যাংশ বণ্টন</span>
               <h3 class="text-xl font-bold">মুনাফা বণ্টন ক্যালকুলেটর</h3>
-              <p class="text-slate-300 text-xs mt-1">সমিতির বর্তমান মোট মুনাফা সমিতির সকল শেয়ারের মাঝে আনুপাতিক হারে বণ্টিত হয়।</p>
+              <p class="text-slate-300 text-xs mt-1">সমিতির অর্জিত মোট মুনাফা সমিতির সকল শেয়ারের মাঝে সমান ও আনুপাতিক হারে বণ্টিত হয়।</p>
             </div>
             <div class="bg-white/10 backdrop-blur-md px-6 py-4 rounded-xl border border-white/10 text-right">
               <span class="text-xs text-slate-300 block">প্রতি শেয়ারের বর্তমান লাভ</span>
@@ -493,7 +586,7 @@
             <div class="flex items-center justify-between">
               <div>
                 <h3 class="font-bold text-slate-800">বিনিয়োগকৃত খাতের তালিকা</h3>
-                <p class="text-xs text-slate-500">জমি বন্ধক, রেহান ও প্রকল্পসমূহ</p>
+                <p class="text-xs text-slate-500">জমি বন্ধক, রেহান ও কৃষি প্রকল্পসমূহ</p>
               </div>
               <button onclick="openModal('investmentModal')" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
                 + নতুন বিনিয়োগ
@@ -507,6 +600,7 @@
                     <th class="py-2.5 px-3 text-right">বিনিয়োগ টাকা</th>
                     <th class="py-2.5 px-3 text-right">আদায়</th>
                     <th class="py-2.5 px-3 text-right">অবশিষ্ট পাওনা</th>
+                    <th class="py-2.5 px-3 text-center">মুছুন</th>
                   </tr>
                 </thead>
                 <tbody id="investments-table-body" class="divide-y divide-slate-100">
@@ -521,7 +615,7 @@
             <div class="flex items-center justify-between">
               <div>
                 <h3 class="font-bold text-slate-800">বিনিয়োগ থেকে অর্জিত লাভ / আয়</h3>
-                <p class="text-xs text-slate-500">দোকান ভাড়া, ধান বিক্রয় ও লভ্যাংশ</p>
+                <p class="text-xs text-slate-500">দোকান ভাড়া, ধান বিক্রয় ও বাণিজ্যিক মুনাফা</p>
               </div>
               <button onclick="openModal('profitModal')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
                 + লাভ এন্ট্রি
@@ -534,6 +628,7 @@
                     <th class="py-2.5 px-3">তারিখ</th>
                     <th class="py-2.5 px-3">উৎস / বিবরণ</th>
                     <th class="py-2.5 px-3 text-right">লাভের পরিমাণ</th>
+                    <th class="py-2.5 px-3 text-center">মুছুন</th>
                   </tr>
                 </thead>
                 <tbody id="profits-table-body" class="divide-y divide-slate-100">
@@ -569,6 +664,7 @@
                     <th class="py-2.5 px-3">তারিখ</th>
                     <th class="py-2.5 px-3">খরচের বিবরণ</th>
                     <th class="py-2.5 px-3 text-right">টাকা</th>
+                    <th class="py-2.5 px-3 text-center">মুছুন</th>
                   </tr>
                 </thead>
                 <tbody id="expenses-table-body" class="divide-y divide-slate-100">
@@ -599,6 +695,7 @@
                     <th class="py-2.5 px-3">তারিখ</th>
                     <th class="py-2.5 px-3">আয়ের উৎস / বিবরণ</th>
                     <th class="py-2.5 px-3 text-right">টাকা</th>
+                    <th class="py-2.5 px-3 text-center">মুছুন</th>
                   </tr>
                 </thead>
                 <tbody id="other-income-table-body" class="divide-y divide-slate-100">
@@ -616,7 +713,7 @@
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center pb-4 border-b border-slate-200 gap-4">
             <div>
               <h3 class="text-lg font-bold text-slate-800">অগ্রযাত্রা সমবায় সমিতির সমন্বিত আর্থিক প্রতিবেদন</h3>
-              <p class="text-xs text-slate-500">সকল হিসাবের অডিট ও ব্যালেন্স বিবরণী</p>
+              <p class="text-xs text-slate-500">সকল হিসাবের নিরীক্ষা ও ব্যালেন্স বিবরণী</p>
             </div>
             <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5">
               <i data-lucide="printer" class="w-4 h-4"></i> পূর্ণাঙ্গ রিপোর্ট প্রিন্ট করুন
@@ -706,34 +803,114 @@
 
   <!-- ==================== MODALS ==================== -->
 
-  <!-- MODAL: Admin Authentication -->
+  <!-- MODAL: Admin Authentication (with Demo Admin Toggle) -->
   <div id="authModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100">
       <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center">
         <div class="flex items-center gap-2">
           <i data-lucide="lock" class="w-5 h-5 text-emerald-400"></i>
-          <h3 class="font-bold text-base">অ্যাডমিন লগইন (Firebase Auth)</h3>
+          <h3 class="font-bold text-base">অ্যাডমিন প্রবেশ (Firebase Auth)</h3>
         </div>
         <button onclick="closeModal('authModal')" class="text-slate-400 hover:text-white">&times;</button>
       </div>
       <form onsubmit="handleAdminLogin(event)" id="loginForm" class="p-6 space-y-4 text-sm">
         <div class="bg-emerald-50 text-emerald-800 p-3 rounded-lg text-xs leading-relaxed">
-          ফায়ারবেস অথেন্টিকেশন দিয়ে সুরক্ষিত। লগইন করলে আপনি ক্লাউড ডেটাবেসে সকল সদস্য ও সঞ্চয় এন্ট্রি করতে পারবেন।
+          ফায়ারবেস অথেন্টিকেশন দিয়ে সুরক্ষিত। লগইন করলে আপনি ক্লাউড ডেটাবেসে সকল সদস্য ও সঞ্চয় এন্ট্রি, এডিট ও ডিলিট করতে পারবেন।
         </div>
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1">অ্যাডমিন ইমেইল *</label>
-          <input type="email" id="login-email" required placeholder="যেমন: akterozzamankhan@gmail.com" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+          <input type="email" id="login-email" placeholder="যেমন: akterozzamankhan@gmail.com" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
         </div>
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1">পাসওয়ার্ড *</label>
-          <input type="password" id="login-password" required placeholder="আপনার পাসওয়ার্ড" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+          <input type="password" id="login-password" placeholder="আপনার পাসওয়ার্ড" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
         </div>
         <div id="login-error-msg" class="text-rose-600 text-xs font-medium"></div>
-        <div class="flex justify-end gap-2 pt-2">
-          <button type="button" onclick="closeModal('authModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg">বাতিল</button>
-          <button type="submit" id="login-submit-btn" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-sm">লগইন করুন</button>
+        <div class="flex flex-col gap-2 pt-1">
+          <button type="submit" id="login-submit-btn" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-sm transition">
+            লগইন করুন
+          </button>
+          <!-- 1-Click Demo Admin Button for effortless testing -->
+          <button type="button" onclick="loginAsDemoAdmin()" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold rounded-lg text-xs transition flex items-center justify-center gap-1.5">
+            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
+            <span>১-ক্লিকে ডেমো পরিচালক হিসেবে প্রবেশ করুন</span>
+          </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Member Passbook Self-Service Portal -->
+  <div id="memberPortalModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100">
+      <div class="px-6 py-4 bg-emerald-700 text-white flex justify-between items-center">
+        <div class="flex items-center gap-2">
+          <i data-lucide="user-check" class="w-5 h-5 text-emerald-300"></i>
+          <h3 class="font-bold text-base">সদস্য পাসবুক পোর্টাল (ব্যালেন্স অনুসন্ধান)</h3>
+        </div>
+        <button onclick="closeModal('memberPortalModal')" class="text-white/80 hover:text-white">&times;</button>
+      </div>
+
+      <div class="p-6 space-y-4 text-sm">
+        <form onsubmit="handleMemberPortalLookup(event)" class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">আপনার মোবাইল নম্বর বা সদস্য কোড দিন</label>
+            <div class="flex gap-2">
+              <input type="text" id="portal-query" placeholder="যেমন: 01814853305 অথবা M-01" required class="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+              <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold text-xs">
+                খুঁজুন
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <div id="portal-error" class="hidden p-3 bg-rose-50 text-rose-700 rounded-lg text-xs"></div>
+
+        <!-- Result Container -->
+        <div id="portal-result" class="hidden space-y-4 pt-2 border-t border-slate-100">
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <div class="flex justify-between items-start">
+              <div>
+                <h4 class="font-bold text-slate-900 text-base" id="portal-m-name">–</h4>
+                <p class="text-xs text-slate-500" id="portal-m-details">–</p>
+              </div>
+              <span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full font-bold text-xs" id="portal-m-shares">–</span>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-200 text-center">
+              <div>
+                <span class="text-[11px] text-slate-500 block">মোট সঞ্চয়</span>
+                <span class="font-bold text-slate-900 font-num" id="portal-m-savings">৳০</span>
+              </div>
+              <div>
+                <span class="text-[11px] text-slate-500 block">প্রস্তাবিত লভ্যাংশ</span>
+                <span class="font-bold text-emerald-600 font-num" id="portal-m-profit">৳০</span>
+              </div>
+              <div>
+                <span class="text-[11px] text-slate-500 block">মোট ইকুইটি</span>
+                <span class="font-bold text-slate-900 font-num" id="portal-m-total">৳০</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h5 class="text-xs font-bold text-slate-700 mb-2">সর্বশেষ জমা লেনদেন</h5>
+            <div class="overflow-x-auto border border-slate-200 rounded-lg">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50">
+                  <tr class="text-slate-600">
+                    <th class="py-2 px-2">তারিখ</th>
+                    <th class="py-2 px-2">রশিদ</th>
+                    <th class="py-2 px-2 text-right">সঞ্চয়</th>
+                    <th class="py-2 px-2 text-center">রশিদ ভিউ</th>
+                  </tr>
+                </thead>
+                <tbody id="portal-history-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -768,6 +945,107 @@
           <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg">সদস্য যোগ করুন</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Edit Member (NEW) -->
+  <div id="editMemberModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+      <div class="px-6 py-4 bg-blue-700 text-white flex justify-between items-center">
+        <h3 class="font-bold text-base">সদস্য তথ্য সংশোধন (Edit Member)</h3>
+        <button onclick="closeModal('editMemberModal')" class="text-white/80 hover:text-white">&times;</button>
+      </div>
+      <form onsubmit="handleUpdateMember(event)" id="editMemberForm" class="p-6 space-y-4 text-sm">
+        <input type="hidden" id="edit-m-id" />
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">সদস্য কোড</label>
+          <input type="text" id="edit-m-code" readonly class="w-full px-3 py-2 bg-slate-100 border border-slate-300 rounded-lg text-sm text-slate-600 cursor-not-allowed" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">সদস্যের নাম *</label>
+          <input type="text" id="edit-m-name" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">মোবাইল নম্বর</label>
+          <input type="text" id="edit-m-phone" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">শেয়ার সংখ্যা *</label>
+            <input type="number" id="edit-m-shares" required min="1" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">মোট সঞ্চয় ব্যালেন্স (৳)</label>
+            <input type="number" id="edit-m-savings" required min="0" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('editMemberModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg">বাতিল</button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg">আপডেট সেভ করুন</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Delete Confirmation (NEW) -->
+  <div id="deleteConfirmModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden p-6 text-center space-y-4">
+      <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+        <i data-lucide="trash-2" class="w-6 h-6"></i>
+      </div>
+      <div>
+        <h4 class="font-bold text-slate-900 text-base" id="delete-modal-title">আপনি কি রেকর্ডটি মুছতে চান?</h4>
+        <p class="text-xs text-slate-500 mt-1">এটি ডাটাবেস থেকে মুছে যাবে এবং হিসাব স্বয়ংক্রিয়ভাবে পুনর্গণনা হবে।</p>
+      </div>
+      <div class="flex justify-center gap-2 pt-2">
+        <button onclick="closeModal('deleteConfirmModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold">
+          বাতিল
+        </button>
+        <button onclick="executeDelete()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold">
+          হ্যাঁ, মুছে ফেলুন
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Backup & Restore Manager (NEW) -->
+  <div id="backupRestoreModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+      <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center">
+        <div class="flex items-center gap-2">
+          <i data-lucide="database" class="w-5 h-5 text-emerald-400"></i>
+          <h3 class="font-bold text-base">ডাটা ব্যাকআপ ও রিস্টোর (Backup & Restore)</h3>
+        </div>
+        <button onclick="closeModal('backupRestoreModal')" class="text-white/80 hover:text-white">&times;</button>
+      </div>
+
+      <div class="p-6 space-y-5 text-sm">
+        <!-- Download Section -->
+        <div>
+          <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider mb-2">১. ব্যাকআপ ডাউনলোড (Export)</h4>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="exportDataJSON()" class="py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl border border-emerald-200 font-semibold text-xs flex items-center justify-center gap-1.5 transition">
+              <i data-lucide="download" class="w-4 h-4 text-emerald-600"></i>
+              <span>JSON ব্যাকআপ</span>
+            </button>
+            <button onclick="exportMembersCSV()" class="py-2.5 px-3 bg-blue-50 hover:bg-blue-100 text-blue-800 rounded-xl border border-blue-200 font-semibold text-xs flex items-center justify-center gap-1.5 transition">
+              <i data-lucide="file-spreadsheet" class="w-4 h-4 text-blue-600"></i>
+              <span>CSV এক্সেল ডাটা</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Restore Section -->
+        <div class="pt-2 border-t border-slate-100">
+          <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider mb-2">২. ব্যাকআপ ফাইল থেকে রিস্টোর (Import)</h4>
+          <div class="dropzone" onclick="document.getElementById('backupFileInput').click()">
+            <i data-lucide="upload-cloud" class="w-8 h-8 text-slate-400 mx-auto mb-2"></i>
+            <p class="text-xs font-semibold text-slate-700">পূর্বের ব্যাকআপ JSON ফাইল আপলোড করুন</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">ক্লিক করুন অথবা ফাইল ড্রপ করুন</p>
+            <input type="file" id="backupFileInput" accept=".json" class="hidden" onchange="if(this.files.length) handleImportJSON(this.files[0])" />
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 

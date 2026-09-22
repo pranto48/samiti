@@ -1,6 +1,6 @@
 /**
  * Somiti (অগ্রযাত্রা সমবায় সমিতি)
- * Firebase Modular SDK Setup & Services
+ * Firebase Modular SDK Setup & Services with CRUD & Batch Restore
  */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -20,8 +20,7 @@ import {
   deleteDoc,
   getDocs,
   onSnapshot,
-  query,
-  orderBy,
+  writeBatch,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -97,7 +96,7 @@ window.FirebaseService = {
         });
         onData(items);
       }, (err) => {
-        console.warn(`Firestore listener error on [${colName}]:`, err);
+        console.warn(`Firestore listener warning on [${colName}]:`, err);
         if (onError) onError(err);
       });
     } catch (e) {
@@ -107,7 +106,7 @@ window.FirebaseService = {
     }
   },
 
-  // Document management
+  // Document management (CRUD)
   addDoc: async (colName, data) => {
     const colRef = collection(db, colName);
     return await addDoc(colRef, {
@@ -194,6 +193,35 @@ window.FirebaseService = {
     }
 
     return results;
+  },
+
+  // Batch Restore from imported JSON file
+  restoreFromJSON: async (backupData) => {
+    let restoredCount = 0;
+    const collectionsMap = {
+      members: backupData.members || [],
+      investments: backupData.investments || [],
+      profits: backupData.profits || [],
+      expenses: backupData.expenses || [],
+      other_income: backupData.otherIncome || [],
+      collections: backupData.collections || []
+    };
+
+    for (const [colName, items] of Object.entries(collectionsMap)) {
+      if (Array.isArray(items) && items.length > 0) {
+        const colRef = collection(db, colName);
+        for (const item of items) {
+          const itemCopy = { ...item };
+          delete itemCopy._docId; // Remove local doc ID reference to generate fresh or preserve
+          await addDoc(colRef, {
+            ...itemCopy,
+            restoredAt: serverTimestamp()
+          });
+          restoredCount++;
+        }
+      }
+    }
+    return restoredCount;
   }
 };
 
