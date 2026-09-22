@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>অগ্রযাত্রা সমবায় সমিতি</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
+        <h1 class="text-3xl font-bold text-center text-green-700 mb-6">অগ্রযাত্রা সমবায় সমিতি</h1>
+
+        <!-- Login Section -->
+        <div id="login-section" class="mb-6 p-4 border border-gray-300 rounded bg-gray-50">
+            <h2 class="text-xl font-semibold mb-4">অ্যাডমিন লগইন</h2>
+            <input type="email" id="email" placeholder="ইমেইল (যেমন: akterozzamankhan@gmail.com)" class="w-full p-2 mb-2 border rounded">
+            <input type="password" id="password" placeholder="পাসওয়ার্ড" class="w-full p-2 mb-2 border rounded">
+            <button id="login-btn" class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">লগইন করুন</button>
+            <p id="login-error" class="text-red-500 mt-2 text-sm"></p>
+        </div>
+
+        <!-- Dashboard Section (Hidden by default) -->
+        <div id="dashboard-section" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-semibold text-gray-800">ড্যাশবোর্ড - সদস্য তালিকা</h2>
+                <button id="logout-btn" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">লগআউট</button>
+            </div>
+
+            <!-- Add Member Form -->
+            <div class="bg-green-50 p-4 rounded mb-6 border border-green-200">
+                <h3 class="text-lg font-bold mb-3">নতুন সদস্য যোগ করুন</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="text" id="memName" placeholder="সদস্যের নাম" class="p-2 border rounded">
+                    <input type="text" id="memPhone" placeholder="মোবাইল নম্বর" class="p-2 border rounded">
+                    <input type="number" id="memShare" placeholder="শেয়ার সংখ্যা" class="p-2 border rounded">
+                    <input type="number" id="memSavings" placeholder="মোট সঞ্চয় (৳)" class="p-2 border rounded">
+                </div>
+                <button id="add-member-btn" class="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">সদস্য সেভ করুন</button>
+            </div>
+
+            <!-- Member List Table -->
+            <table class="w-full text-left border-collapse border border-gray-300">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="border p-2">নাম</th>
+                        <th class="border p-2">মোবাইল</th>
+                        <th class="border p-2">শেয়ার</th>
+                        <th class="border p-2">মোট সঞ্চয়</th>
+                    </tr>
+                </thead>
+                <tbody id="member-list">
+                    <!-- Data will be loaded here from Firebase -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Firebase SDK Setup (Modular V9/V10) -->
+    <script type="module">
+        // Import Firebase modules directly from CDN
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Your Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDtUrWW5j-HVECJmHHM5hGFWG-ZsabyN6A",
+            authDomain: "somiti-956b5.firebaseapp.com",
+            projectId: "somiti-956b5",
+            storageBucket: "somiti-956b5.firebasestorage.app",
+            messagingSenderId: "977921265997",
+            appId: "1:977921265997:web:ede083d0a6884be0632704",
+            measurementId: "G-C99QLWTZGZ"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // UI Elements
+        const loginSection = document.getElementById('login-section');
+        const dashboardSection = document.getElementById('dashboard-section');
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const addMemberBtn = document.getElementById('add-member-btn');
+        const memberList = document.getElementById('member-list');
+
+        // Check Login State
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                loginSection.classList.add('hidden');
+                dashboardSection.classList.remove('hidden');
+                loadMembers(); // Load data when logged in
+            } else {
+                loginSection.classList.remove('hidden');
+                dashboardSection.classList.add('hidden');
+            }
+        });
+
+        // Login Functionality
+        loginBtn.addEventListener('click', () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    document.getElementById('login-error').innerText = "";
+                    alert("সফলভাবে লগইন হয়েছে!");
+                })
+                .catch((error) => {
+                    document.getElementById('login-error').innerText = "ভুল ইমেইল বা পাসওয়ার্ড! " + error.message;
+                });
+        });
+
+        // Logout Functionality
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth).then(() => {
+                alert("লগআউট করা হয়েছে!");
+            });
+        });
+
+        // Add New Member to Firestore Database
+        addMemberBtn.addEventListener('click', async () => {
+            const name = document.getElementById('memName').value;
+            const phone = document.getElementById('memPhone').value;
+            const share = document.getElementById('memShare').value;
+            const savings = document.getElementById('memSavings').value;
+
+            if(!name || !phone) {
+                alert("নাম ও মোবাইল নম্বর আবশ্যক!"); return;
+            }
+
+            try {
+                // Add to 'members' collection in Firestore
+                await addDoc(collection(db, "members"), {
+                    name: name,
+                    phone: phone,
+                    share: Number(share),
+                    savings: Number(savings),
+                    timestamp: new Date()
+                });
+                alert("নতুন সদস্য সফলভাবে যোগ করা হয়েছে!");
+                
+                // Clear inputs
+                document.getElementById('memName').value = '';
+                document.getElementById('memPhone').value = '';
+                document.getElementById('memShare').value = '';
+                document.getElementById('memSavings').value = '';
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                alert("ডেটা যোগ করতে সমস্যা হয়েছে। Firestore Permission ঠিক আছে কিনা চেক করুন।");
+            }
+        });
+
+        // Load Members in Real-time from Firestore
+        function loadMembers() {
+            const unsubscribe = onSnapshot(collection(db, "members"), (snapshot) => {
+                memberList.innerHTML = ""; // Clear table
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const row = `
+                        <tr>
+                            <td class="border p-2">${data.name}</td>
+                            <td class="border p-2">${data.phone}</td>
+                            <td class="border p-2">${data.share} টি</td>
+                            <td class="border p-2">৳${data.savings}</td>
+                        </tr>
+                    `;
+                    memberList.innerHTML += row;
+                });
+            });
+        }
+    </script>
+</body>
+</html>

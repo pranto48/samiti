@@ -1,0 +1,208 @@
+/* ============================================================
+   Somiti (অগ্রযাত্রা সমবায় সমিতি) - Design System & Custom CSS
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
+
+:root {
+  --font-bengali: 'Hind Siliguri', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-numeric: 'Outfit', 'Hind Siliguri', sans-serif;
+  
+  --primary: #059669;
+  --primary-hover: #047857;
+  --primary-light: #ecfdf5;
+  --primary-glow: rgba(5, 150, 105, 0.25);
+  
+  --dark-sidebar: #090e17;
+  --dark-card: #111827;
+  --dark-border: #1f2937;
+  
+  --slate-bg: #f8fafc;
+  --card-bg: #ffffff;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --border-color: #e2e8f0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-bengali);
+  background-color: var(--slate-bg);
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Numeric emphasis */
+.font-num {
+  font-family: var(--font-numeric);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Smooth transitions */
+.transition-smooth {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Card hover subtle elevation */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+}
+
+/* Badge Glow */
+.glow-primary {
+  box-shadow: 0 0 15px var(--primary-glow);
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-modal {
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* Toast Notifications */
+#toast-container {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  animation: slideIn 0.3s ease forwards;
+  max-width: 24rem;
+}
+
+.toast-success {
+  background-color: #064e3b;
+  color: #ecfdf5;
+  border: 1px solid #059669;
+}
+
+.toast-error {
+  background-color: #881337;
+  color: #ffe4e6;
+  border: 1px solid #e11d48;
+}
+
+.toast-info {
+  background-color: #0f172a;
+  color: #f8fafc;
+  border: 1px solid #334155;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Print specific formatting */
+@media print {
+  .no-print,
+  #toast-container,
+  aside,
+  header {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .print-page-break {
+    page-break-after: always;
+  }
+
+  /* Printable receipt wrapper */
+  #receiptModal {
+    position: static !important;
+    background: white !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+
+  #receipt-printable-card {
+    border: 1px dashed #475569 !important;
+    box-shadow: none !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 1.5rem !important;
+  }
+
+  /* Printable Audit Statement */
+  #view-reports {
+    display: block !important;
+  }
+
+  #view-dashboard,
+  #view-members,
+  #view-collections,
+  #view-investments,
+  #view-expenses {
+    display: none !important;
+  }
+}
+
+.print-only {
+  display: none;
+}

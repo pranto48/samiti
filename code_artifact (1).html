@@ -1,0 +1,1601 @@
+<!DOCTYPE html>
+<html lang="bn" class="h-full bg-slate-50">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>অগ্রযাত্রা সমবায় সমিতি - ম্যানেজমেন্ট সিস্টেম</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b'
+            }
+          },
+          fontFamily: {
+            bengali: ['"Hind Siliguri"', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts: Hind Siliguri for refined Bengali typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    body {
+      font-family: 'Hind Siliguri', sans-serif;
+    }
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      .print-only {
+        display: block !important;
+      }
+      body {
+        background: white !important;
+      }
+    }
+    .print-only {
+      display: none;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+
+<body class="h-full text-slate-800 flex flex-col md:flex-row antialiased">
+
+  <!-- Navigation Sidebar -->
+  <aside class="no-print w-full md:w-64 bg-slate-900 text-white flex-shrink-0 flex flex-col justify-between shadow-xl z-20">
+    <div>
+      <!-- Brand Logo / Header -->
+      <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center space-x-3 space-x-reverse">
+          <div class="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-lg shadow-brand-500/30">
+            <i data-lucide="landmark" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h1 class="text-base font-bold tracking-tight text-white">অগ্রযাত্রা সমবায়</h1>
+            <p class="text-xs text-brand-400 font-medium">হিসাব-নিকাশ সফটওয়্যার</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Navigation Menu -->
+      <nav class="p-3 space-y-1.5 text-sm font-medium">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition">
+          <i data-lucide="layout-dashboard" class="w-5 h-5 text-brand-400"></i>
+          <span>ড্যাশবোর্ড সামারি</span>
+        </button>
+
+        <button onclick="switchTab('members')" id="nav-members" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition">
+          <i data-lucide="users" class="w-5 h-5 text-blue-400"></i>
+          <span>সদস্য ও লেজার</span>
+        </button>
+
+        <button onclick="switchTab('collections')" id="nav-collections" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition">
+          <i data-lucide="badge-dollar-sign" class="w-5 h-5 text-emerald-400"></i>
+          <span>সঞ্চয় ও কিস্তি আদায়</span>
+        </button>
+
+        <button onclick="switchTab('investments')" id="nav-investments" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition">
+          <i data-lucide="trending-up" class="w-5 h-5 text-amber-400"></i>
+          <span>বিনিয়োগ ও লভ্যাংশ</span>
+        </button>
+
+        <button onclick="switchTab('expenses')" id="nav-expenses" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition">
+          <i data-lucide="receipt" class="w-5 h-5 text-rose-400"></i>
+          <span>আয় ও ব্যয় হিসাব</span>
+        </button>
+
+        <button onclick="switchTab('reports')" id="nav-reports" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition">
+          <i data-lucide="file-spreadsheet" class="w-5 h-5 text-purple-400"></i>
+          <span>রিপোর্ট ও বিবরণী</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Quick Actions & Reset Button -->
+    <div class="p-4 border-t border-slate-800 text-xs text-slate-400 space-y-2">
+      <div class="flex items-center justify-between">
+        <span>ডাটাবেজ স্ট্যাটাস:</span>
+        <span class="inline-flex items-center gap-1.5 text-emerald-400 font-medium">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> সচল (Local DB)
+        </span>
+      </div>
+      <div class="pt-2 flex gap-2">
+        <button onclick="exportDataJSON()" class="flex-1 py-1.5 px-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-center text-xs">
+          ব্যাকআপ
+        </button>
+        <button onclick="resetToInitialData()" class="py-1.5 px-2 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded text-center text-xs">
+          রিসেট
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 flex flex-col min-w-0 overflow-y-auto bg-slate-100">
+    <!-- Top Action Bar -->
+    <header class="no-print bg-white border-b border-slate-200 px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-10 shadow-sm">
+      <div>
+        <h2 id="page-title" class="text-xl font-bold text-slate-800">ড্যাশবোর্ড ওভারভিউ</h2>
+        <p class="text-xs text-slate-500">অগ্রযাত্রা সমবায় সমিতির সমন্বিত হিসাব পরিচালনা সিস্টেম</p>
+      </div>
+
+      <div class="flex items-center gap-2.5">
+        <button onclick="openModal('collectionModal')" class="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm shadow-brand-600/30 transition">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          <span>কিস্তি জমা নিন</span>
+        </button>
+        <button onclick="openModal('memberModal')" class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold px-3.5 py-2 rounded-lg transition">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>
+          <span>নতুন সদস্য</span>
+        </button>
+        <button onclick="window.print()" class="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold px-3 py-2 rounded-lg transition">
+          <i data-lucide="printer" class="w-4 h-4"></i>
+          <span>প্রিন্ট</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Content Body Views -->
+    <div class="p-6 space-y-6">
+
+      <!-- View: Dashboard -->
+      <section id="view-dashboard" class="space-y-6">
+        <!-- Summary Cards Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Total Savings -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">সর্বমোট সঞ্চয়</span>
+              <span class="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
+                <i data-lucide="wallet" class="w-5 h-5"></i>
+              </span>
+            </div>
+            <div class="mt-3">
+              <div id="stat-total-savings" class="text-2xl font-bold text-slate-800">৳০</div>
+              <p class="text-xs text-emerald-600 mt-1 flex items-center font-medium">
+                <i data-lucide="check-circle" class="w-3.5 h-3.5 mr-1 inline"></i>
+                <span id="stat-total-shares">০ টি শেয়ার</span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Total Investment -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">মোট বিনিয়োগ</span>
+              <span class="p-2.5 bg-amber-50 text-amber-600 rounded-xl">
+                <i data-lucide="building-2" class="w-5 h-5"></i>
+              </span>
+            </div>
+            <div class="mt-3">
+              <div id="stat-total-investment" class="text-2xl font-bold text-slate-800">৳০</div>
+              <p class="text-xs text-slate-500 mt-1">জমি, বন্ধক ও কৃষি প্রকল্প</p>
+            </div>
+          </div>
+
+          <!-- Total Profit/Earnings -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">মোট অর্জিত মুনাফা</span>
+              <span class="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
+                <i data-lucide="trending-up" class="w-5 h-5"></i>
+              </span>
+            </div>
+            <div class="mt-3">
+              <div id="stat-total-profit" class="text-2xl font-bold text-blue-700">৳০</div>
+              <p class="text-xs text-blue-600 mt-1">ভাড়া ও ফসল বিক্রয় লভ্যাংশ</p>
+            </div>
+          </div>
+
+          <!-- Cash in Hand -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">বর্তমান নগদ স্থিতি</span>
+              <span class="p-2.5 bg-brand-50 text-brand-600 rounded-xl">
+                <i data-lucide="circle-dollar-sign" class="w-5 h-5"></i>
+              </span>
+            </div>
+            <div class="mt-3">
+              <div id="stat-cash-in-hand" class="text-2xl font-bold text-brand-700">৳০</div>
+              <p class="text-xs text-slate-500 mt-1">তহবিলে অবশিষ্ট নগদ টাকা</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Secondary Stats Strip -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-white p-4 rounded-xl border border-slate-200 text-sm">
+            <span class="text-slate-500 text-xs">মোট সদস্য সংখ্যা</span>
+            <div id="stat-member-count" class="text-lg font-bold text-slate-800 mt-0.5">০ জন</div>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 text-sm">
+            <span class="text-slate-500 text-xs">জরিমানা ও ফি আদায়</span>
+            <div id="stat-fees-collected" class="text-lg font-bold text-emerald-700 mt-0.5">৳০</div>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 text-sm">
+            <span class="text-slate-500 text-xs">সমিতির সর্বমোট ব্যয়</span>
+            <div id="stat-total-expense" class="text-lg font-bold text-rose-600 mt-0.5">৳০</div>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 text-sm">
+            <span class="text-slate-500 text-xs">প্রতি শেয়ারে প্রস্তাবিত লভ্যাংশ</span>
+            <div id="stat-profit-per-share" class="text-lg font-bold text-indigo-700 mt-0.5">৳০</div>
+          </div>
+        </div>
+
+        <!-- Recent Activities and Top Members Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Quick Member Status -->
+          <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                <i data-lucide="shield-check" class="w-5 h-5 text-brand-600"></i>
+                সদস্যদের সঞ্চয় ও শেয়ার তালিকা সংক্ষেপ
+              </h3>
+              <button onclick="switchTab('members')" class="text-xs text-brand-600 hover:text-brand-700 font-semibold">সকল সদস্য দেখুন &rarr;</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-sm">
+                <thead>
+                  <tr class="bg-slate-50 text-slate-600 font-semibold text-xs border-y border-slate-200">
+                    <th class="py-2.5 px-3">আইডি</th>
+                    <th class="py-2.5 px-3">সদস্যের নাম</th>
+                    <th class="py-2.5 px-3 text-center">শেয়ার</th>
+                    <th class="py-2.5 px-3 text-right">মোট সঞ্চয়</th>
+                    <th class="py-2.5 px-3 text-center">অ্যাকশন</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboard-members-preview" class="divide-y divide-slate-100">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Investment Overview Breakdown -->
+          <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm flex flex-col justify-between">
+            <div>
+              <h3 class="font-bold text-slate-800 flex items-center gap-2 mb-3">
+                <i data-lucide="pie-chart" class="w-5 h-5 text-amber-500"></i>
+                বিনিয়োগ ও তহবিলের হিসাব
+              </h3>
+              <div class="space-y-3 text-sm">
+                <div class="p-3 bg-amber-50/70 border border-amber-100 rounded-xl">
+                  <div class="text-xs text-amber-800 font-medium">জমি ও বন্ধকী মূলধন</div>
+                  <div class="text-base font-bold text-amber-900 mt-0.5">৳২,০৫,০০০</div>
+                  <div class="text-xs text-amber-700 mt-0.5">১৮ গন্ডা জমি ও দোকান বন্ধক</div>
+                </div>
+                <div class="p-3 bg-emerald-50/70 border border-emerald-100 rounded-xl">
+                  <div class="text-xs text-emerald-800 font-medium">কৃষি ও চাষাবাদ বিনিয়োগ</div>
+                  <div class="text-base font-bold text-emerald-900 mt-0.5">৳৪২,৩২০</div>
+                  <div class="text-xs text-emerald-700 mt-0.5">হাল চাষ, সার, বীজ ও মজুরি বাবদ</div>
+                </div>
+                <div class="p-3 bg-blue-50/70 border border-blue-100 rounded-xl">
+                  <div class="text-xs text-blue-800 font-medium">অর্জিত আয় ও ভাড়া</div>
+                  <div class="text-base font-bold text-blue-900 mt-0.5">৳২৯,৬০৭.৮৬</div>
+                  <div class="text-xs text-blue-700 mt-0.5">দোকান ভাড়া ও ধান বিক্রয়</div>
+                </div>
+              </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-100">
+              <button onclick="switchTab('investments')" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs rounded-lg transition text-center">
+                বিস্তারিত বিনিয়োগ হিসাব খুলুন
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- View: Members -->
+      <section id="view-members" class="hidden space-y-5">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-5">
+            <div>
+              <h3 class="text-lg font-bold text-slate-800">সমিতির সদস্যদের তালিকা ও লেজার</h3>
+              <p class="text-xs text-slate-500">প্রতিটি সদস্যের সঞ্চয়, শেয়ার এবং জমার সম্পূর্ণ বিবরণ</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+              <input type="text" id="memberSearchInput" onkeyup="renderMembersTable()" placeholder="সদস্যের নাম বা মোবাইল খুঁজুন..." class="text-sm px-3.5 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none w-full md:w-64" />
+              <button onclick="openModal('memberModal')" class="bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-3.5 py-2 rounded-lg transition flex items-center gap-1.5">
+                <i data-lucide="plus" class="w-4 h-4"></i> নতুন সদস্য
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr class="bg-slate-50 text-slate-600 font-semibold text-xs border-y border-slate-200">
+                  <th class="py-3 px-3">কোড</th>
+                  <th class="py-3 px-3">সদস্যের নাম</th>
+                  <th class="py-3 px-3">মোবাইল</th>
+                  <th class="py-3 px-3 text-center">শেয়ার সংখ্যা</th>
+                  <th class="py-3 px-3 text-right">মোট সঞ্চয়</th>
+                  <th class="py-3 px-3 text-right">জরিমানা</th>
+                  <th class="py-3 px-3 text-right">ফি/অন্যান্য</th>
+                  <th class="py-3 px-3 text-center">সর্বমোট কিস্তি</th>
+                  <th class="py-3 px-3 text-center">অ্যাকশন</th>
+                </tr>
+              </thead>
+              <tbody id="members-table-body" class="divide-y divide-slate-100">
+                <!-- Dynamically generated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- View: Collections (Installments) -->
+      <section id="view-collections" class="hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Collection Form -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm h-fit">
+            <h3 class="text-base font-bold text-slate-800 mb-1 flex items-center gap-2">
+              <i data-lucide="badge-plus" class="w-5 h-5 text-brand-600"></i>
+              কিস্তি ও সঞ্চয় আদায় ফর্ম
+            </h3>
+            <p class="text-xs text-slate-500 mb-4">সদস্যের সঞ্চয় ও ফি নিয়মিত এন্ট্রি করুন</p>
+
+            <form id="collectionForm" onsubmit="handleSaveCollection(event)" class="space-y-3.5 text-sm">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">সদস্য নির্বাচন করুন *</label>
+                <select id="collect-member-select" required onchange="onMemberSelectChange()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                  <option value="">-- সদস্য নির্বাচন করুন --</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">তারিখ *</label>
+                <input type="date" id="collect-date" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" />
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">সঞ্চয় জমার পরিমাণ (টাকা) *</label>
+                <input type="number" id="collect-amount" placeholder="যেমন: ১০০০" required min="1" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" />
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">জরিমানা (যদি থাকে)</label>
+                  <input type="number" id="collect-fine" placeholder="০" min="0" value="0" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">ভর্তি/অন্যান্য ফি</label>
+                  <input type="number" id="collect-fee" placeholder="০" min="0" value="0" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" />
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">মন্তব্য / বিবরণ</label>
+                <input type="text" id="collect-remarks" placeholder="মাসিক কিস্তি জমা" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" />
+              </div>
+
+              <button type="submit" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-lg shadow-sm transition">
+                জমা সংরক্ষণ ও রশিদ তৈরি করুন
+              </button>
+            </form>
+          </div>
+
+          <!-- Collections History Table -->
+          <div class="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-base font-bold text-slate-800">সর্বশেষ কিস্তি আদায়ের বিবরণ</h3>
+                <p class="text-xs text-slate-500">জমার তালিকা ও রশিদ প্রিন্ট করার অপশন</p>
+              </div>
+              <span id="collection-count-badge" class="px-2.5 py-1 bg-brand-50 text-brand-700 text-xs font-bold rounded-full">০ টি এন্ট্রি</span>
+            </div>
+
+            <div class="overflow-x-auto max-h-[500px]">
+              <table class="w-full text-left border-collapse text-sm">
+                <thead class="sticky top-0 bg-slate-50 border-b border-slate-200">
+                  <tr class="text-slate-600 font-semibold text-xs">
+                    <th class="py-2.5 px-3">রশিদ নং</th>
+                    <th class="py-2.5 px-3">তারিখ</th>
+                    <th class="py-2.5 px-3">সদস্যের নাম</th>
+                    <th class="py-2.5 px-3 text-right">সঞ্চয় জমা</th>
+                    <th class="py-2.5 px-3 text-right">জরিমানা/ফি</th>
+                    <th class="py-2.5 px-3 text-right">সর্বমোট</th>
+                    <th class="py-2.5 px-3 text-center">রশিদ</th>
+                  </tr>
+                </thead>
+                <tbody id="collection-history-body" class="divide-y divide-slate-100">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- View: Investments & Profits -->
+      <section id="view-investments" class="hidden space-y-6">
+        <!-- Dividend / Profit Distribution Calculator -->
+        <div class="bg-gradient-to-r from-slate-900 to-brand-900 text-white p-6 rounded-2xl shadow-md">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <span class="inline-block px-2.5 py-1 bg-brand-500/20 text-brand-300 text-xs font-bold rounded mb-2">শেয়ার ভিত্তিক লভ্যাংশ বণ্টন</span>
+              <h3 class="text-xl font-bold">মুনাফা বণ্টন ক্যালকুলেটর</h3>
+              <p class="text-slate-300 text-xs mt-1">সমিতির বর্তমান মোট মুনাফা সমিতির সকল শেয়ারের মাঝে আনুপাতিক হারে বণ্টিত হয়।</p>
+            </div>
+            <div class="bg-white/10 backdrop-blur-md px-6 py-4 rounded-xl border border-white/10 text-right">
+              <span class="text-xs text-slate-300 block">প্রতি শেয়ারের বর্তমান লাভ</span>
+              <span id="calc-profit-per-share-display" class="text-2xl font-black text-brand-300">৳০</span>
+              <span class="text-xs text-slate-400 block mt-0.5" id="calc-total-shares-note">মোট শেয়ার: ২১ টি</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Investment Records -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-slate-800">বিনিয়োগকৃত খাতের তালিকা</h3>
+                <p class="text-xs text-slate-500">জমি বন্ধক, রেহান ও প্রকল্পসমূহ</p>
+              </div>
+              <button onclick="openModal('investmentModal')" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+                + নতুন বিনিয়োগ
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-sm">
+                <thead>
+                  <tr class="bg-slate-50 text-slate-600 font-semibold text-xs border-y border-slate-200">
+                    <th class="py-2.5 px-3">খাত / বিবরণ</th>
+                    <th class="py-2.5 px-3 text-right">বিনিয়োগ টাকা</th>
+                    <th class="py-2.5 px-3 text-right">আদায়</th>
+                    <th class="py-2.5 px-3 text-right">অবশিষ্ট পাওনা</th>
+                  </tr>
+                </thead>
+                <tbody id="investments-table-body" class="divide-y divide-slate-100">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Profit Records -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-slate-800">বিনিয়োগ থেকে অর্জিত লাভ / আয়</h3>
+                <p class="text-xs text-slate-500">দোকান ভাড়া, ধান বিক্রয় ও লভ্যাংশ</p>
+              </div>
+              <button onclick="openModal('profitModal')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+                + লাভ এন্ট্রি
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-sm">
+                <thead>
+                  <tr class="bg-slate-50 text-slate-600 font-semibold text-xs border-y border-slate-200">
+                    <th class="py-2.5 px-3">তারিখ</th>
+                    <th class="py-2.5 px-3">উৎস / বিবরণ</th>
+                    <th class="py-2.5 px-3 text-right">লাভের পরিমাণ</th>
+                  </tr>
+                </thead>
+                <tbody id="profits-table-body" class="divide-y divide-slate-100">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- View: Expenses & Other Income -->
+      <section id="view-expenses" class="hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Expenses Section -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-rose-700 flex items-center gap-1.5">
+                  <i data-lucide="arrow-up-right" class="w-4 h-4"></i> সমিতির খরচ / ব্যয়
+                </h3>
+                <p class="text-xs text-slate-500">স্ট্যাম্প, যাতায়াত, ব্যালেন্স মেসেজ ও প্রশাসনিক ব্যয়</p>
+              </div>
+              <button onclick="openModal('expenseModal')" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+                + খরচ এন্ট্রি
+              </button>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-sm">
+                <thead>
+                  <tr class="bg-slate-50 text-slate-600 font-semibold text-xs border-y border-slate-200">
+                    <th class="py-2.5 px-3">তারিখ</th>
+                    <th class="py-2.5 px-3">খরচের বিবরণ</th>
+                    <th class="py-2.5 px-3 text-right">টাকা</th>
+                  </tr>
+                </thead>
+                <tbody id="expenses-table-body" class="divide-y divide-slate-100">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Other Income Section -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-emerald-700 flex items-center gap-1.5">
+                  <i data-lucide="arrow-down-left" class="w-4 h-4"></i> বিবিধ আয়
+                </h3>
+                <p class="text-xs text-slate-500">ব্যাংক সুদ ও অন্যান্য অপ্রত্যাশিত আয়</p>
+              </div>
+              <button onclick="openModal('incomeModal')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+                + আয় এন্ট্রি
+              </button>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-sm">
+                <thead>
+                  <tr class="bg-slate-50 text-slate-600 font-semibold text-xs border-y border-slate-200">
+                    <th class="py-2.5 px-3">তারিখ</th>
+                    <th class="py-2.5 px-3">আয়ের উৎস / বিবরণ</th>
+                    <th class="py-2.5 px-3 text-right">টাকা</th>
+                  </tr>
+                </thead>
+                <tbody id="other-income-table-body" class="divide-y divide-slate-100">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- View: Reports & Statements -->
+      <section id="view-reports" class="hidden space-y-6">
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center pb-4 border-b border-slate-200 gap-4">
+            <div>
+              <h3 class="text-lg font-bold text-slate-800">অগ্রযাত্রা সমবায় সমিতির সমন্বিত আর্থিক প্রতিবেদন</h3>
+              <p class="text-xs text-slate-500">সকল হিসাবের অডিট ও ব্যালেন্স বিবরণী</p>
+            </div>
+            <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5">
+              <i data-lucide="printer" class="w-4 h-4"></i> পূর্ণাঙ্গ রিপোর্ট প্রিন্ট করুন
+            </button>
+          </div>
+
+          <!-- Printable Financial Statement -->
+          <div class="mt-6 space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Left: Inflow -->
+              <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
+                <h4 class="text-sm font-bold text-emerald-800 border-b pb-2 mb-3">মোট প্রাপ্তি / জমা (Inflow)</h4>
+                <div class="space-y-2 text-sm">
+                  <div class="flex justify-between py-1 border-b border-slate-200">
+                    <span class="text-slate-600">১. সদস্যদের মূল সঞ্চয় জমা:</span>
+                    <span id="rep-savings" class="font-bold text-slate-800">৳০</span>
+                  </div>
+                  <div class="flex justify-between py-1 border-b border-slate-200">
+                    <span class="text-slate-600">২. জরিমানা ও ভর্তি ফি:</span>
+                    <span id="rep-fines" class="font-bold text-slate-800">৳০</span>
+                  </div>
+                  <div class="flex justify-between py-1 border-b border-slate-200">
+                    <span class="text-slate-600">৩. অর্জিত নিট মুনাফা (ভাড়া ও ধান):</span>
+                    <span id="rep-profit" class="font-bold text-slate-800">৳০</span>
+                  </div>
+                  <div class="flex justify-between py-1 border-b border-slate-200">
+                    <span class="text-slate-600">৪. ব্যাংক সুদ ও বিবিধ আয়:</span>
+                    <span id="rep-income" class="font-bold text-slate-800">৳০</span>
+                  </div>
+                  <div class="flex justify-between pt-2 text-base font-bold text-emerald-700">
+                    <span>সর্বমোট তহবিল গ্রহণ:</span>
+                    <span id="rep-total-inflow">৳০</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: Outflow -->
+              <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
+                <h4 class="text-sm font-bold text-rose-800 border-b pb-2 mb-3">মোট স্থিতি ও বিনিয়োগ (Fund Allocation)</h4>
+                <div class="space-y-2 text-sm">
+                  <div class="flex justify-between py-1 border-b border-slate-200">
+                    <span class="text-slate-600">১. বর্তমান মোট বিনিয়োগ (রেহান/কৃষি):</span>
+                    <span id="rep-investment" class="font-bold text-slate-800">৳০</span>
+                  </div>
+                  <div class="flex justify-between py-1 border-b border-slate-200">
+                    <span class="text-slate-600">২. সমিতির সর্বমোট পরিচালন ব্যয়:</span>
+                    <span id="rep-expenses" class="font-bold text-slate-800">৳০</span>
+                  </div>
+                  <div class="flex justify-between py-1 border-b border-slate-200">
+                    <span class="text-slate-600">৩. ব্যাংকে / নগদ তহবিলের বর্তমান স্থিতি:</span>
+                    <span id="rep-cash" class="font-bold text-brand-700">৳০</span>
+                  </div>
+                  <div class="flex justify-between pt-2 text-base font-bold text-slate-900 border-t">
+                    <span>মোট তহবিল সমন্বয়:</span>
+                    <span id="rep-balance-check">৳০</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Member Share Allocation Table -->
+            <div>
+              <h4 class="text-sm font-bold text-slate-800 mb-3">সদস্যভিত্তিক শেয়ার ও সম্ভাব্য পাওনা স্টেটমেন্ট</h4>
+              <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                <table class="w-full text-left text-sm">
+                  <thead class="bg-slate-100 text-xs font-semibold text-slate-700">
+                    <tr>
+                      <th class="py-2.5 px-3">নাম</th>
+                      <th class="py-2.5 px-3 text-center">শেয়ার</th>
+                      <th class="py-2.5 px-3 text-right">জমা সঞ্চয়</th>
+                      <th class="py-2.5 px-3 text-right">শেয়ার অনুপাতে লভ্যাংশ</th>
+                      <th class="py-2.5 px-3 text-right font-bold text-brand-800">মোট বর্তমান সম্পদ (সঞ্চয়+লাভ)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="report-members-dividend" class="divide-y divide-slate-100">
+                    <!-- Populated dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- MODAL: Add / Edit Member -->
+  <div id="memberModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95">
+      <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center">
+        <h3 class="font-bold text-base">নতুন সদস্য নিবন্ধন</h3>
+        <button onclick="closeModal('memberModal')" class="text-slate-400 hover:text-white">&times;</button>
+      </div>
+      <form id="memberForm" onsubmit="handleSaveMember(event)" class="p-6 space-y-4 text-sm">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">সদস্যের নাম *</label>
+          <input type="text" id="m-name" required placeholder="যেমন: মোঃ আক্তারুজ্জামান" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">মোবাইল নম্বর</label>
+            <input type="text" id="m-phone" placeholder="017xxxxxxxx" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">শেয়ার সংখ্যা *</label>
+            <input type="number" id="m-shares" required min="1" value="1" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">প্রাথমিক সঞ্চয় জমা (টাকা)</label>
+          <input type="number" id="m-savings" placeholder="০" min="0" value="0" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none" />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('memberModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg">বাতিল</button>
+          <button type="submit" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-lg">সংরক্ষণ করুন</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Member Detailed Ledger View -->
+  <div id="memberLedgerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div class="px-6 py-4 bg-brand-800 text-white flex justify-between items-center">
+        <div>
+          <h3 id="ledger-member-name" class="font-bold text-base">সদস্যের হিসাব লেজার</h3>
+          <p id="ledger-member-info" class="text-xs text-brand-200">শেয়ার ও জমার বিবরণ</p>
+        </div>
+        <button onclick="closeModal('memberLedgerModal')" class="text-white/80 hover:text-white text-lg">&times;</button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-4">
+        <!-- Summary Strip in Ledger -->
+        <div class="grid grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+          <div>
+            <span class="text-xs text-slate-500">মোট সঞ্চয়</span>
+            <div id="ledger-total-savings" class="text-lg font-bold text-brand-700">৳০</div>
+          </div>
+          <div>
+            <span class="text-xs text-slate-500">মোট কিস্তি</span>
+            <div id="ledger-installments" class="text-lg font-bold text-slate-800">০ বার</div>
+          </div>
+          <div>
+            <span class="text-xs text-slate-500">প্রাপ্য সম্ভাব্য লভ্যাংশ</span>
+            <div id="ledger-dividend" class="text-lg font-bold text-emerald-600">৳০</div>
+          </div>
+        </div>
+
+        <h4 class="font-bold text-slate-800 text-sm">কিস্তি ও সঞ্চয় জমাদানের ইতিহাস:</h4>
+        <div class="overflow-x-auto border border-slate-200 rounded-xl">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-100 text-xs font-semibold text-slate-700">
+              <tr>
+                <th class="py-2 px-3">তারিখ</th>
+                <th class="py-2 px-3">বিবরণ</th>
+                <th class="py-2 px-3 text-right">সঞ্চয়</th>
+                <th class="py-2 px-3 text-right">জরিমানা/ফি</th>
+                <th class="py-2 px-3 text-right">মোট</th>
+              </tr>
+            </thead>
+            <tbody id="ledger-history-body" class="divide-y divide-slate-100">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+        <button onclick="closeModal('memberLedgerModal')" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-sm rounded-lg">বন্ধ করুন</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Printable Receipt / Voucher -->
+  <div id="receiptModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden p-6 border border-slate-200">
+      <div id="printable-receipt" class="space-y-4 text-slate-800">
+        <!-- Receipt Header -->
+        <div class="text-center border-b pb-3">
+          <h2 class="text-lg font-bold text-slate-900">অগ্রযাত্রা সমবায় সমিতি</h2>
+          <p class="text-xs text-slate-500">সঞ্চয় ও কিস্তি আদায় রশিদ</p>
+          <div class="mt-2 flex justify-between text-xs text-slate-600">
+            <span>রশিদ নং: <strong id="rec-id">--</strong></span>
+            <span>তারিখ: <strong id="rec-date">--</strong></span>
+          </div>
+        </div>
+
+        <!-- Receipt Member Info -->
+        <div class="bg-slate-50 p-3 rounded-lg text-xs space-y-1">
+          <div class="flex justify-between">
+            <span class="text-slate-500">সদস্যের নাম:</span>
+            <span class="font-bold text-slate-800" id="rec-member-name">--</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">সদস্য কোড / শেয়ার:</span>
+            <span class="font-semibold text-slate-700" id="rec-member-shares">--</span>
+          </div>
+        </div>
+
+        <!-- Receipt Breakdown -->
+        <div class="space-y-1.5 text-xs">
+          <div class="flex justify-between py-1 border-b border-dashed">
+            <span>সঞ্চয় জমা:</span>
+            <span class="font-bold" id="rec-savings">৳০</span>
+          </div>
+          <div class="flex justify-between py-1 border-b border-dashed">
+            <span>জরিমানা:</span>
+            <span class="font-bold" id="rec-fine">৳০</span>
+          </div>
+          <div class="flex justify-between py-1 border-b border-dashed">
+            <span>ভর্তি / অন্যান্য ফি:</span>
+            <span class="font-bold" id="rec-fee">৳০</span>
+          </div>
+          <div class="flex justify-between py-2 text-sm font-bold text-brand-700 border-t border-slate-300">
+            <span>সর্বমোট আদায়:</span>
+            <span id="rec-total">৳০</span>
+          </div>
+        </div>
+
+        <div class="pt-6 flex justify-between text-[11px] text-slate-500 text-center">
+          <div>
+            <div class="w-24 border-b border-slate-400 mb-1"></div>
+            <span>জমা প্রদানকারীর স্বাক্ষর</span>
+          </div>
+          <div>
+            <div class="w-24 border-b border-slate-400 mb-1"></div>
+            <span>আদায়কারীর স্বাক্ষর</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 flex gap-2 no-print">
+        <button onclick="window.print()" class="flex-1 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5">
+          <i data-lucide="printer" class="w-4 h-4"></i> প্রিন্ট ভাউচার
+        </button>
+        <button onclick="closeModal('receiptModal')" class="py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg">
+          বন্ধ করুন
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Add Investment -->
+  <div id="investmentModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+      <div class="px-6 py-4 bg-amber-600 text-white flex justify-between items-center">
+        <h3 class="font-bold text-base">নতুন বিনিয়োগ খাত এন্ট্রি</h3>
+        <button onclick="closeModal('investmentModal')" class="text-white/80 hover:text-white">&times;</button>
+      </div>
+      <form onsubmit="handleSaveInvestment(event)" class="p-6 space-y-4 text-sm">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">বিনিয়োগের খাত / বিবরণ *</label>
+          <input type="text" id="inv-title" required placeholder="যেমন: জমি রেহান বা দোকান বন্ধক" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">বিনিয়োগের মোট টাকা *</label>
+          <input type="number" id="inv-amount" required min="1" placeholder="যেমন: ৫০,০০০" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">আদায়কৃত টাকা (যদি থাকে)</label>
+          <input type="number" id="inv-recovered" min="0" value="0" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none" />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('investmentModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg">বাতিল</button>
+          <button type="submit" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg">সংরক্ষণ করুন</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Add Profit Entry -->
+  <div id="profitModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+      <div class="px-6 py-4 bg-blue-600 text-white flex justify-between items-center">
+        <h3 class="font-bold text-base">বিনিয়োগ থেকে লাভ এন্ট্রি</h3>
+        <button onclick="closeModal('profitModal')" class="text-white/80 hover:text-white">&times;</button>
+      </div>
+      <form onsubmit="handleSaveProfit(event)" class="p-6 space-y-4 text-sm">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">তারিখ *</label>
+          <input type="date" id="prf-date" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">লাভের উৎস / বিবরণ *</label>
+          <input type="text" id="prf-title" required placeholder="যেমন: দোকান ভাড়া বা আমন ধান বিক্রি" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">টাকার পরিমাণ *</label>
+          <input type="number" id="prf-amount" required min="1" step="any" placeholder="যেমন: ৫০০০" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('profitModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg">বাতিল</button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg">সংরক্ষণ করুন</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Add Expense -->
+  <div id="expenseModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+      <div class="px-6 py-4 bg-rose-600 text-white flex justify-between items-center">
+        <h3 class="font-bold text-base">নতুন খরচ এন্ট্রি</h3>
+        <button onclick="closeModal('expenseModal')" class="text-white/80 hover:text-white">&times;</button>
+      </div>
+      <form onsubmit="handleSaveExpense(event)" class="p-6 space-y-4 text-sm">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">তারিখ *</label>
+          <input type="date" id="exp-date" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">খরচের খাত / বিবরণ *</label>
+          <input type="text" id="exp-title" required placeholder="যেমন: স্ট্যাম্প খরচ, যাতায়াত" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">খরচের পরিমাণ (টাকা) *</label>
+          <input type="number" id="exp-amount" required min="1" step="any" placeholder="যেমন: ৫০০" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:outline-none" />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('expenseModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg">বাতিল</button>
+          <button type="submit" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-lg">সংরক্ষণ করুন</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Add Other Income -->
+  <div id="incomeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+      <div class="px-6 py-4 bg-emerald-600 text-white flex justify-between items-center">
+        <h3 class="font-bold text-base">বিবিধ আয় এন্ট্রি</h3>
+        <button onclick="closeModal('incomeModal')" class="text-white/80 hover:text-white">&times;</button>
+      </div>
+      <form onsubmit="handleSaveIncome(event)" class="p-6 space-y-4 text-sm">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">তারিখ *</label>
+          <input type="date" id="inc-date" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">আয়ের খাত / বিবরণ *</label>
+          <input type="text" id="inc-title" required placeholder="যেমন: ব্যাংক ইন্টারেস্ট" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">টাকার পরিমাণ *</label>
+          <input type="number" id="inc-amount" required min="1" step="any" placeholder="যেমন: ১০৭.৮৬" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('incomeModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg">বাতিল</button>
+          <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg">সংরক্ষণ করুন</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Bengali number formatting helper
+    function formatBengaliNumber(num) {
+      if (num === null || num === undefined) return '০';
+      const parsed = Number(num).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+      const bengaliDigits = {'0':'০','1':'১','2':'২','3':'৩','4':'৪','5':'৫','6':'৬','7':'৭','8':'৮','9':'৯',',':',','.':'.'};
+      return parsed.replace(/[0-9,\.]/g, match => bengaliDigits[match] || match);
+    }
+
+    // Default Seed Data from 'অগ্রযাত্রা সমবায় সমিতি' Excel sheet
+    const INITIAL_MEMBERS = [
+      { id: 'M-01', name: 'মোঃ আক্তারুজ্জামান', phone: '01814853305', shares: 2, savings: 50000, fine: 200, fee: 400, installments: 20 },
+      { id: 'M-02', name: 'দেলোয়ার হোসেন ভূঁইয়া', phone: '01861586634', shares: 1, savings: 22000, fine: 0, fee: 200, installments: 17 },
+      { id: 'M-03', name: 'মোঃ লোকমান', phone: '01863478505', shares: 3, savings: 66000, fine: 0, fee: 600, installments: 17 },
+      { id: 'M-04', name: 'মোঃ মুশফিকুর রহমান', phone: '01683810187', shares: 1, savings: 22000, fine: 0, fee: 200, installments: 17 },
+      { id: 'M-05', name: 'মোঃ মোস্তাফিজুর রহমান', phone: '01635661885', shares: 1, savings: 22000, fine: 0, fee: 200, installments: 17 },
+      { id: 'M-07', name: 'মোঃ মেহেদী হাসান', phone: '01673707545', shares: 2, savings: 44000, fine: 200, fee: 400, installments: 17 },
+      { id: 'M-08', name: 'মোঃ সাইফুল আলম', phone: '01831284720', shares: 4, savings: 92000, fine: 0, fee: 800, installments: 18 },
+      { id: 'M-09', name: 'মইনুল হাসান নাহিদ', phone: '01684040462', shares: 1, savings: 22000, fine: 100, fee: 200, installments: 17 },
+      { id: 'M-10', name: 'মোঃ রুবেল বেপারী', phone: '01700000000', shares: 5, savings: 110000, fine: 0, fee: 1000, installments: 17 }
+    ];
+
+    const INITIAL_INVESTMENTS = [
+      { id: 'INV-1', title: 'জমি রেহান ১৮ গন্ডা', amount: 155000, recovered: 0 },
+      { id: 'INV-2', title: 'দোকান বন্ধক (মাসিক ১,৫০০/-)', amount: 50000, recovered: 0 },
+      { id: 'INV-3', title: 'হাল চাষ ও কৃষি বিনিয়োগ', amount: 42320, recovered: 0 }
+    ];
+
+    const INITIAL_PROFITS = [
+      { id: 'PRF-1', date: '2024-05-15', title: 'দোকান ভাড়া আদায়', amount: 20000 },
+      { id: 'PRF-2', date: '2024-08-20', title: 'ধান বিক্রয় বাবদ (আমন ফসল)', amount: 9600 }
+    ];
+
+    const INITIAL_EXPENSES = [
+      { id: 'EXP-1', date: '2024-01-10', title: 'স্ট্যাম্প ও চুক্তিপত্র ক্রয়', amount: 1200 },
+      { id: 'EXP-2', date: '2024-03-12', title: 'যাতায়াত ও মিটিং আপ্যায়ন', amount: 800 },
+      { id: 'EXP-3', date: '2024-06-05', title: 'SMS অ্যালার্ট ও ব্যাংক চার্জ', amount: 1705.86 }
+    ];
+
+    const INITIAL_OTHER_INCOME = [
+      { id: 'INC-1', date: '2024-06-30', title: 'ব্যাংক হিসাব মুনাফা (Interest)', amount: 107.86 }
+    ];
+
+    const INITIAL_COLLECTIONS = [
+      { id: 'REC-101', date: '2024-10-01', memberId: 'M-01', memberName: 'মোঃ আক্তারুজ্জামান', savings: 2000, fine: 0, fee: 0, total: 2000, remarks: 'অক্টোবর কিস্তি' },
+      { id: 'REC-102', date: '2024-10-01', memberId: 'M-03', memberName: 'মোঃ লোকমান', savings: 3000, fine: 0, fee: 0, total: 3000, remarks: 'অক্টোবর কিস্তি' },
+      { id: 'REC-103', date: '2024-10-02', memberId: 'M-08', memberName: 'মোঃ সাইফুল আলম', savings: 4000, fine: 0, fee: 0, total: 4000, remarks: 'অক্টোবর কিস্তি' }
+    ];
+
+    // Local Storage Management
+    const DB = {
+      get: (key, fallback) => {
+        try {
+          const item = localStorage.getItem('agrajatra_' + key);
+          return item ? JSON.parse(item) : fallback;
+        } catch (e) {
+          return fallback;
+        }
+      },
+      set: (key, val) => {
+        try {
+          localStorage.setItem('agrajatra_' + key, JSON.stringify(val));
+        } catch (e) {
+          console.error("Storage error:", e);
+        }
+      }
+    };
+
+    // State
+    let members = DB.get('members', INITIAL_MEMBERS);
+    let investments = DB.get('investments', INITIAL_INVESTMENTS);
+    let profits = DB.get('profits', INITIAL_PROFITS);
+    let expenses = DB.get('expenses', INITIAL_EXPENSES);
+    let otherIncome = DB.get('otherIncome', INITIAL_OTHER_INCOME);
+    let collections = DB.get('collections', INITIAL_COLLECTIONS);
+
+    // Save All
+    function syncAllData() {
+      DB.set('members', members);
+      DB.set('investments', investments);
+      DB.set('profits', profits);
+      DB.set('expenses', expenses);
+      DB.set('otherIncome', otherIncome);
+      DB.set('collections', collections);
+      renderAll();
+    }
+
+    function switchTab(tabId) {
+      const tabs = ['dashboard', 'members', 'collections', 'investments', 'expenses', 'reports'];
+      const titles = {
+        'dashboard': 'ড্যাশবোর্ড ওভারভিউ',
+        'members': 'সদস্য ব্যবস্থাপনা ও লেজার',
+        'collections': 'সঞ্চয় ও কিস্তি আদায়',
+        'investments': 'বিনিয়োগ ও লভ্যাংশ হিসাব',
+        'expenses': 'আয় ও ব্যয় হিসাব',
+        'reports': 'পূর্ণাঙ্গ অডিট ও ব্যালেন্স রিপোর্ট'
+      };
+
+      tabs.forEach(tab => {
+        const viewEl = document.getElementById('view-' + tab);
+        const navEl = document.getElementById('nav-' + tab);
+        if (viewEl) viewEl.classList.add('hidden');
+        if (navEl) {
+          navEl.classList.remove('bg-brand-600', 'text-white', 'shadow-md');
+          navEl.classList.add('text-slate-300');
+        }
+      });
+
+      const activeView = document.getElementById('view-' + tabId);
+      const activeNav = document.getElementById('nav-' + tabId);
+      if (activeView) activeView.classList.remove('hidden');
+      if (activeNav) {
+        activeNav.classList.add('bg-brand-600', 'text-white', 'shadow-md');
+        activeNav.classList.remove('text-slate-300');
+      }
+
+      document.getElementById('page-title').innerText = titles[tabId] || 'অগ্রযাত্রা সমবায় সমিতি';
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function calculateTotals() {
+      const totalSavings = members.reduce((sum, m) => sum + (Number(m.savings) || 0), 0);
+      const totalFines = members.reduce((sum, m) => sum + (Number(m.fine) || 0), 0);
+      const totalFees = members.reduce((sum, m) => sum + (Number(m.fee) || 0), 0);
+      const totalShares = members.reduce((sum, m) => sum + (Number(m.shares) || 0), 0);
+
+      const totalInvestment = investments.reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0);
+      const recoveredInvestment = investments.reduce((sum, inv) => sum + (Number(inv.recovered) || 0), 0);
+      const pendingInvestment = totalInvestment - recoveredInvestment;
+
+      const totalProfit = profits.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+      const totalExpenses = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+      const totalOtherIncome = otherIncome.reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0);
+
+      // Cash in hand = Total savings collected + fees + fines + profits collected + other income + recovered investments - total investments made - total expenses
+      const cashInHand = (totalSavings + totalFines + totalFees + totalProfit + totalOtherIncome + recoveredInvestment) - (totalInvestment + totalExpenses);
+      
+      const profitPerShare = totalShares > 0 ? (totalProfit / totalShares) : 0;
+
+      return {
+        totalSavings,
+        totalFines,
+        totalFees,
+        totalShares,
+        totalInvestment,
+        pendingInvestment,
+        totalProfit,
+        totalExpenses,
+        totalOtherIncome,
+        cashInHand,
+        profitPerShare
+      };
+    }
+
+    function renderDashboard() {
+      const stats = calculateTotals();
+
+      document.getElementById('stat-total-savings').innerText = '৳' + formatBengaliNumber(stats.totalSavings);
+      document.getElementById('stat-total-shares').innerText = formatBengaliNumber(stats.totalShares) + ' টি মোট শেয়ার';
+      document.getElementById('stat-total-investment').innerText = '৳' + formatBengaliNumber(stats.pendingInvestment);
+      document.getElementById('stat-total-profit').innerText = '৳' + formatBengaliNumber(stats.totalProfit);
+      document.getElementById('stat-cash-in-hand').innerText = '৳' + formatBengaliNumber(stats.cashInHand);
+      document.getElementById('stat-member-count').innerText = formatBengaliNumber(members.length) + ' জন';
+      document.getElementById('stat-fees-collected').innerText = '৳' + formatBengaliNumber(stats.totalFines + stats.totalFees);
+      document.getElementById('stat-total-expense').innerText = '৳' + formatBengaliNumber(stats.totalExpenses);
+      document.getElementById('stat-profit-per-share').innerText = '৳' + formatBengaliNumber(stats.profitPerShare.toFixed(2));
+
+      // Dividend view displays
+      document.getElementById('calc-profit-per-share-display').innerText = '৳' + formatBengaliNumber(stats.profitPerShare.toFixed(2));
+      document.getElementById('calc-total-shares-note').innerText = 'মোট শেয়ার: ' + formatBengaliNumber(stats.totalShares) + ' টি';
+
+      // Dashboard member table preview
+      const previewEl = document.getElementById('dashboard-members-preview');
+      previewEl.innerHTML = '';
+      members.slice(0, 5).forEach(m => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition';
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 text-xs font-semibold text-slate-500">${m.id}</td>
+          <td class="py-2.5 px-3 font-semibold text-slate-800">${m.name}</td>
+          <td class="py-2.5 px-3 text-center">
+            <span class="px-2 py-0.5 bg-slate-100 font-bold rounded text-xs text-slate-700">${formatBengaliNumber(m.shares)}</span>
+          </td>
+          <td class="py-2.5 px-3 text-right font-bold text-slate-900">৳${formatBengaliNumber(m.savings)}</td>
+          <td class="py-2.5 px-3 text-center">
+            <button onclick="viewMemberLedger('${m.id}')" class="text-xs text-brand-600 hover:text-brand-800 font-semibold underline">লেজার</button>
+          </td>
+        `;
+        previewEl.appendChild(tr);
+      });
+    }
+
+    function renderMembersTable() {
+      const tbody = document.getElementById('members-table-body');
+      const search = (document.getElementById('memberSearchInput').value || '').trim().toLowerCase();
+      tbody.innerHTML = '';
+
+      const filtered = members.filter(m => 
+        m.name.toLowerCase().includes(search) || 
+        m.id.toLowerCase().includes(search) || 
+        (m.phone && m.phone.includes(search))
+      );
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-slate-400 text-sm">কোন সদস্য পাওয়া যায়নি</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(m => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50/80 transition';
+        tr.innerHTML = `
+          <td class="py-3 px-3 text-xs font-semibold text-slate-500">${m.id}</td>
+          <td class="py-3 px-3">
+            <div class="font-bold text-slate-800">${m.name}</div>
+          </td>
+          <td class="py-3 px-3 text-slate-500 text-xs">${m.phone || '–'}</td>
+          <td class="py-3 px-3 text-center">
+            <span class="inline-block px-2.5 py-0.5 bg-brand-50 text-brand-700 font-bold text-xs rounded-full">
+              ${formatBengaliNumber(m.shares)} টি
+            </span>
+          </td>
+          <td class="py-3 px-3 text-right font-bold text-slate-900">৳${formatBengaliNumber(m.savings)}</td>
+          <td class="py-3 px-3 text-right text-rose-600 font-medium">৳${formatBengaliNumber(m.fine || 0)}</td>
+          <td class="py-3 px-3 text-right text-slate-600">৳${formatBengaliNumber(m.fee || 0)}</td>
+          <td class="py-3 px-3 text-center text-xs font-medium text-slate-600">${formatBengaliNumber(m.installments || 0)} টি</td>
+          <td class="py-3 px-3 text-center space-x-1">
+            <button onclick="viewMemberLedger('${m.id}')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-medium transition">
+              লেজার
+            </button>
+            <button onclick="quickCollect('${m.id}')" class="px-2 py-1 bg-brand-50 hover:bg-brand-100 text-brand-700 rounded text-xs font-semibold transition">
+              জমা
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Update Member Select Dropdown in Collection Form
+      const select = document.getElementById('collect-member-select');
+      select.innerHTML = '<option value="">-- সদস্য নির্বাচন করুন --</option>';
+      members.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.innerText = `${m.id}: ${m.name} (${formatBengaliNumber(m.shares)} শেয়ার)`;
+        select.appendChild(opt);
+      });
+    }
+
+    function renderCollections() {
+      const tbody = document.getElementById('collection-history-body');
+      tbody.innerHTML = '';
+      document.getElementById('collection-count-badge').innerText = formatBengaliNumber(collections.length) + ' টি এন্ট্রি';
+
+      collections.slice().reverse().forEach(c => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition';
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 text-xs font-bold text-slate-600">${c.id}</td>
+          <td class="py-2.5 px-3 text-xs text-slate-500">${c.date}</td>
+          <td class="py-2.5 px-3 font-semibold text-slate-800">${c.memberName}</td>
+          <td class="py-2.5 px-3 text-right font-medium text-emerald-700">৳${formatBengaliNumber(c.savings)}</td>
+          <td class="py-2.5 px-3 text-right text-xs text-slate-500">৳${formatBengaliNumber((Number(c.fine)||0) + (Number(c.fee)||0))}</td>
+          <td class="py-2.5 px-3 text-right font-bold text-slate-900">৳${formatBengaliNumber(c.total)}</td>
+          <td class="py-2.5 px-3 text-center">
+            <button onclick="showReceiptModal('${c.id}')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded transition">
+              রশিদ
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function handleSaveCollection(e) {
+      e.preventDefault();
+      const memberId = document.getElementById('collect-member-select').value;
+      const date = document.getElementById('collect-date').value;
+      const savings = Number(document.getElementById('collect-amount').value) || 0;
+      const fine = Number(document.getElementById('collect-fine').value) || 0;
+      const fee = Number(document.getElementById('collect-fee').value) || 0;
+      const remarks = document.getElementById('collect-remarks').value || 'নিয়মিত কিস্তি জমা';
+
+      if (!memberId || !date || savings <= 0) return;
+
+      const member = members.find(m => m.id === memberId);
+      if (!member) return;
+
+      const total = savings + fine + fee;
+      const receiptId = 'REC-' + (collections.length + 101);
+
+      // Add collection
+      const newCollection = {
+        id: receiptId,
+        date,
+        memberId,
+        memberName: member.name,
+        savings,
+        fine,
+        fee,
+        total,
+        remarks
+      };
+
+      collections.push(newCollection);
+
+      // Update Member Balance
+      member.savings = (Number(member.savings) || 0) + savings;
+      member.fine = (Number(member.fine) || 0) + fine;
+      member.fee = (Number(member.fee) || 0) + fee;
+      member.installments = (Number(member.installments) || 0) + 1;
+
+      syncAllData();
+
+      // Reset form
+      document.getElementById('collectionForm').reset();
+      document.getElementById('collect-date').valueAsDate = new Date();
+
+      // Show receipt immediately
+      showReceiptModal(receiptId);
+    }
+
+    function showReceiptModal(collectionId) {
+      const c = collections.find(item => item.id === collectionId);
+      if (!c) return;
+
+      const member = members.find(m => m.id === c.memberId) || {};
+
+      document.getElementById('rec-id').innerText = c.id;
+      document.getElementById('rec-date').innerText = c.date;
+      document.getElementById('rec-member-name').innerText = c.memberName;
+      document.getElementById('rec-member-shares').innerText = `${c.memberId} (${formatBengaliNumber(member.shares || 1)} টি শেয়ার)`;
+      document.getElementById('rec-savings').innerText = '৳' + formatBengaliNumber(c.savings);
+      document.getElementById('rec-fine').innerText = '৳' + formatBengaliNumber(c.fine);
+      document.getElementById('rec-fee').innerText = '৳' + formatBengaliNumber(c.fee);
+      document.getElementById('rec-total').innerText = '৳' + formatBengaliNumber(c.total);
+
+      openModal('receiptModal');
+    }
+
+    function quickCollect(memberId) {
+      switchTab('collections');
+      const select = document.getElementById('collect-member-select');
+      select.value = memberId;
+      onMemberSelectChange();
+    }
+
+    function onMemberSelectChange() {
+      const memberId = document.getElementById('collect-member-select').value;
+      const member = members.find(m => m.id === memberId);
+      if (member) {
+        // Preset 1000 per share
+        const suggested = (member.shares || 1) * 1000;
+        document.getElementById('collect-amount').value = suggested;
+      }
+    }
+
+    function renderInvestments() {
+      const tbody = document.getElementById('investments-table-body');
+      tbody.innerHTML = '';
+      investments.forEach(inv => {
+        const pending = (Number(inv.amount) || 0) - (Number(inv.recovered) || 0);
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition';
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 font-semibold text-slate-800">${inv.title}</td>
+          <td class="py-2.5 px-3 text-right font-medium text-slate-700">৳${formatBengaliNumber(inv.amount)}</td>
+          <td class="py-2.5 px-3 text-right text-emerald-600 font-medium">৳${formatBengaliNumber(inv.recovered)}</td>
+          <td class="py-2.5 px-3 text-right font-bold text-amber-700">৳${formatBengaliNumber(pending)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const ptbody = document.getElementById('profits-table-body');
+      ptbody.innerHTML = '';
+      profits.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition';
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 text-xs text-slate-500">${p.date}</td>
+          <td class="py-2.5 px-3 font-medium text-slate-800">${p.title}</td>
+          <td class="py-2.5 px-3 text-right font-bold text-blue-700">৳${formatBengaliNumber(p.amount)}</td>
+        `;
+        ptbody.appendChild(tr);
+      });
+    }
+
+    function renderExpensesAndIncome() {
+      const expBody = document.getElementById('expenses-table-body');
+      expBody.innerHTML = '';
+      expenses.forEach(e => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition';
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 text-xs text-slate-500">${e.date}</td>
+          <td class="py-2.5 px-3 font-medium text-slate-800">${e.title}</td>
+          <td class="py-2.5 px-3 text-right font-bold text-rose-600">৳${formatBengaliNumber(e.amount)}</td>
+        `;
+        expBody.appendChild(tr);
+      });
+
+      const incBody = document.getElementById('other-income-table-body');
+      incBody.innerHTML = '';
+      otherIncome.forEach(inc => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition';
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 text-xs text-slate-500">${inc.date}</td>
+          <td class="py-2.5 px-3 font-medium text-slate-800">${inc.title}</td>
+          <td class="py-2.5 px-3 text-right font-bold text-emerald-600">৳${formatBengaliNumber(inc.amount)}</td>
+        `;
+        incBody.appendChild(tr);
+      });
+    }
+
+    function renderReports() {
+      const stats = calculateTotals();
+      const totalInflow = stats.totalSavings + stats.totalFines + stats.totalFees + stats.totalProfit + stats.totalOtherIncome;
+      const totalAllocated = stats.pendingInvestment + stats.totalExpenses + stats.cashInHand;
+
+      document.getElementById('rep-savings').innerText = '৳' + formatBengaliNumber(stats.totalSavings);
+      document.getElementById('rep-fines').innerText = '৳' + formatBengaliNumber(stats.totalFines + stats.totalFees);
+      document.getElementById('rep-profit').innerText = '৳' + formatBengaliNumber(stats.totalProfit);
+      document.getElementById('rep-income').innerText = '৳' + formatBengaliNumber(stats.totalOtherIncome);
+      document.getElementById('rep-total-inflow').innerText = '৳' + formatBengaliNumber(totalInflow);
+
+      document.getElementById('rep-investment').innerText = '৳' + formatBengaliNumber(stats.pendingInvestment);
+      document.getElementById('rep-expenses').innerText = '৳' + formatBengaliNumber(stats.totalExpenses);
+      document.getElementById('rep-cash').innerText = '৳' + formatBengaliNumber(stats.cashInHand);
+      document.getElementById('rep-balance-check').innerText = '৳' + formatBengaliNumber(totalAllocated);
+
+      // Member Dividend Statement Table
+      const mDivBody = document.getElementById('report-members-dividend');
+      mDivBody.innerHTML = '';
+      members.forEach(m => {
+        const memberProfit = (Number(m.shares) || 1) * stats.profitPerShare;
+        const totalWorth = (Number(m.savings) || 0) + memberProfit;
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition';
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 font-semibold text-slate-800">${m.name} <span class="text-xs text-slate-400">(${m.id})</span></td>
+          <td class="py-2.5 px-3 text-center font-bold text-slate-700">${formatBengaliNumber(m.shares)}</td>
+          <td class="py-2.5 px-3 text-right font-medium text-slate-700">৳${formatBengaliNumber(m.savings)}</td>
+          <td class="py-2.5 px-3 text-right font-semibold text-emerald-600">৳${formatBengaliNumber(memberProfit.toFixed(2))}</td>
+          <td class="py-2.5 px-3 text-right font-bold text-brand-800">৳${formatBengaliNumber(totalWorth.toFixed(2))}</td>
+        `;
+        mDivBody.appendChild(tr);
+      });
+    }
+
+    function viewMemberLedger(memberId) {
+      const member = members.find(m => m.id === memberId);
+      if (!member) return;
+
+      const stats = calculateTotals();
+      const memberProfit = (Number(member.shares) || 1) * stats.profitPerShare;
+
+      document.getElementById('ledger-member-name').innerText = `${member.name} - এর ব্যক্তিগত খতিয়ান`;
+      document.getElementById('ledger-member-info').innerText = `সদস্য আইডি: ${member.id} | শেয়ার সংখ্যা: ${formatBengaliNumber(member.shares)} টি | মোবাইল: ${member.phone || '–'}`;
+      document.getElementById('ledger-total-savings').innerText = '৳' + formatBengaliNumber(member.savings);
+      document.getElementById('ledger-installments').innerText = formatBengaliNumber(member.installments || 0) + ' টি';
+      document.getElementById('ledger-dividend').innerText = '৳' + formatBengaliNumber(memberProfit.toFixed(2));
+
+      // Filter transactions for this member
+      const memberTx = collections.filter(c => c.memberId === memberId);
+      const tbody = document.getElementById('ledger-history-body');
+      tbody.innerHTML = '';
+
+      if (memberTx.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 text-xs">নতুন কোনো কিস্তি জমা রেকর্ড নেই (প্রাথমিক ব্যালেন্স যুক্ত)</td></tr>`;
+      } else {
+        memberTx.forEach(tx => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-50 transition';
+          tr.innerHTML = `
+            <td class="py-2 px-3 text-xs text-slate-500">${tx.date}</td>
+            <td class="py-2 px-3 text-slate-700">${tx.remarks || 'কিস্তি জমা'}</td>
+            <td class="py-2 px-3 text-right font-medium text-emerald-700">৳${formatBengaliNumber(tx.savings)}</td>
+            <td class="py-2 px-3 text-right text-xs text-slate-500">৳${formatBengaliNumber((Number(tx.fine)||0)+(Number(tx.fee)||0))}</td>
+            <td class="py-2 px-3 text-right font-bold text-slate-800">৳${formatBengaliNumber(tx.total)}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      openModal('memberLedgerModal');
+    }
+
+    function handleSaveMember(e) {
+      e.preventDefault();
+      const name = document.getElementById('m-name').value.trim();
+      const phone = document.getElementById('m-phone').value.trim();
+      const shares = Number(document.getElementById('m-shares').value) || 1;
+      const savings = Number(document.getElementById('m-savings').value) || 0;
+
+      const newId = 'M-' + String(members.length + 1).padStart(2, '0');
+      members.push({
+        id: newId,
+        name,
+        phone,
+        shares,
+        savings,
+        fine: 0,
+        fee: 0,
+        installments: savings > 0 ? 1 : 0
+      });
+
+      syncAllData();
+      closeModal('memberModal');
+      document.getElementById('memberForm').reset();
+    }
+
+    function handleSaveInvestment(e) {
+      e.preventDefault();
+      const title = document.getElementById('inv-title').value.trim();
+      const amount = Number(document.getElementById('inv-amount').value) || 0;
+      const recovered = Number(document.getElementById('inv-recovered').value) || 0;
+
+      investments.push({
+        id: 'INV-' + (investments.length + 1),
+        title,
+        amount,
+        recovered
+      });
+
+      syncAllData();
+      closeModal('investmentModal');
+    }
+
+    function handleSaveProfit(e) {
+      e.preventDefault();
+      const date = document.getElementById('prf-date').value;
+      const title = document.getElementById('prf-title').value.trim();
+      const amount = Number(document.getElementById('prf-amount').value) || 0;
+
+      profits.push({
+        id: 'PRF-' + (profits.length + 1),
+        date,
+        title,
+        amount
+      });
+
+      syncAllData();
+      closeModal('profitModal');
+    }
+
+    function handleSaveExpense(e) {
+      e.preventDefault();
+      const date = document.getElementById('exp-date').value;
+      const title = document.getElementById('exp-title').value.trim();
+      const amount = Number(document.getElementById('exp-amount').value) || 0;
+
+      expenses.push({
+        id: 'EXP-' + (expenses.length + 1),
+        date,
+        title,
+        amount
+      });
+
+      syncAllData();
+      closeModal('expenseModal');
+    }
+
+    function handleSaveIncome(e) {
+      e.preventDefault();
+      const date = document.getElementById('inc-date').value;
+      const title = document.getElementById('inc-title').value.trim();
+      const amount = Number(document.getElementById('inc-amount').value) || 0;
+
+      otherIncome.push({
+        id: 'INC-' + (otherIncome.length + 1),
+        date,
+        title,
+        amount
+      });
+
+      syncAllData();
+      closeModal('incomeModal');
+    }
+
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('hidden');
+    }
+
+    function exportDataJSON() {
+      const data = {
+        members,
+        investments,
+        profits,
+        expenses,
+        otherIncome,
+        collections,
+        exportedAt: new Date().toISOString()
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Agrajatra_Somobay_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function resetToInitialData() {
+      // Safe reset using standard in-app feedback
+      localStorage.removeItem('agrajatra_members');
+      localStorage.removeItem('agrajatra_investments');
+      localStorage.removeItem('agrajatra_profits');
+      localStorage.removeItem('agrajatra_expenses');
+      localStorage.removeItem('agrajatra_otherIncome');
+      localStorage.removeItem('agrajatra_collections');
+
+      members = [...INITIAL_MEMBERS];
+      investments = [...INITIAL_INVESTMENTS];
+      profits = [...INITIAL_PROFITS];
+      expenses = [...INITIAL_EXPENSES];
+      otherIncome = [...INITIAL_OTHER_INCOME];
+      collections = [...INITIAL_COLLECTIONS];
+
+      syncAllData();
+    }
+
+    function renderAll() {
+      renderDashboard();
+      renderMembersTable();
+      renderCollections();
+      renderInvestments();
+      renderExpensesAndIncome();
+      renderReports();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // Set today's date in all date inputs
+      const todayStr = new Date().toISOString().slice(0, 10);
+      ['collect-date', 'prf-date', 'exp-date', 'inc-date'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = todayStr;
+      });
+
+      switchTab('dashboard');
+      renderAll();
+    });
+  </script>
+</body>
+</html>
