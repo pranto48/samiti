@@ -1,6 +1,6 @@
 /**
  * Somiti (অগ্রযাত্রা সমবায় সমিতি)
- * Firebase Modular SDK Setup & Services with CRUD & Batch Restore
+ * Firebase Modular SDK Setup & Services with Cloud Backup & Batch Restore
  */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -20,7 +20,6 @@ import {
   deleteDoc,
   getDocs,
   onSnapshot,
-  writeBatch,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -132,70 +131,30 @@ window.FirebaseService = {
   seedCloudDatabase: async () => {
     const results = { members: 0, investments: 0, profits: 0, expenses: 0, otherIncome: 0, collections: 0 };
     
-    // Seed members
-    const membersCol = collection(db, "members");
-    const mSnap = await getDocs(membersCol);
-    if (mSnap.empty) {
-      for (const m of SEED_DATA.members) {
-        await addDoc(membersCol, { ...m, createdAt: serverTimestamp() });
-        results.members++;
-      }
-    }
+    const collectionsToSeed = [
+      { name: "members", data: SEED_DATA.members, counter: "members" },
+      { name: "investments", data: SEED_DATA.investments, counter: "investments" },
+      { name: "profits", data: SEED_DATA.profits, counter: "profits" },
+      { name: "expenses", data: SEED_DATA.expenses, counter: "expenses" },
+      { name: "other_income", data: SEED_DATA.otherIncome, counter: "otherIncome" },
+      { name: "collections", data: SEED_DATA.collections, counter: "collections" }
+    ];
 
-    // Seed investments
-    const invCol = collection(db, "investments");
-    const invSnap = await getDocs(invCol);
-    if (invSnap.empty) {
-      for (const inv of SEED_DATA.investments) {
-        await addDoc(invCol, { ...inv, createdAt: serverTimestamp() });
-        results.investments++;
-      }
-    }
-
-    // Seed profits
-    const prfCol = collection(db, "profits");
-    const prfSnap = await getDocs(prfCol);
-    if (prfSnap.empty) {
-      for (const prf of SEED_DATA.profits) {
-        await addDoc(prfCol, { ...prf, createdAt: serverTimestamp() });
-        results.profits++;
-      }
-    }
-
-    // Seed expenses
-    const expCol = collection(db, "expenses");
-    const expSnap = await getDocs(expCol);
-    if (expSnap.empty) {
-      for (const exp of SEED_DATA.expenses) {
-        await addDoc(expCol, { ...exp, createdAt: serverTimestamp() });
-        results.expenses++;
-      }
-    }
-
-    // Seed otherIncome
-    const incCol = collection(db, "other_income");
-    const incSnap = await getDocs(incCol);
-    if (incSnap.empty) {
-      for (const inc of SEED_DATA.otherIncome) {
-        await addDoc(incCol, { ...inc, createdAt: serverTimestamp() });
-        results.otherIncome++;
-      }
-    }
-
-    // Seed collections
-    const colCol = collection(db, "collections");
-    const colSnap = await getDocs(colCol);
-    if (colSnap.empty) {
-      for (const c of SEED_DATA.collections) {
-        await addDoc(colCol, { ...c, createdAt: serverTimestamp() });
-        results.collections++;
+    for (const c of collectionsToSeed) {
+      const colRef = collection(db, c.name);
+      const snap = await getDocs(colRef);
+      if (snap.empty) {
+        for (const item of c.data) {
+          await addDoc(colRef, { ...item, createdAt: serverTimestamp() });
+          results[c.counter]++;
+        }
       }
     }
 
     return results;
   },
 
-  // Batch Restore from imported JSON file
+  // Restore or Merge from imported JSON file
   restoreFromJSON: async (backupData) => {
     let restoredCount = 0;
     const collectionsMap = {
@@ -212,7 +171,7 @@ window.FirebaseService = {
         const colRef = collection(db, colName);
         for (const item of items) {
           const itemCopy = { ...item };
-          delete itemCopy._docId; // Remove local doc ID reference to generate fresh or preserve
+          delete itemCopy._docId;
           await addDoc(colRef, {
             ...itemCopy,
             restoredAt: serverTimestamp()

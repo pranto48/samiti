@@ -1,7 +1,13 @@
 /**
- * Somiti (অগ্রযাত্রা সমবায় সমিতি) - Core Application Logic
- * Comprehensive Upgrades: Animations, Dynamic Views, Charts, Multi-Role Auth,
- * CRUD Data Entry, JSON Import/Export & CSV Reporting.
+ * Somiti (অগ্রযাত্রা সমবায় সমিতি) - High-Productivity Application Engine
+ * Features:
+ * - Real-time Firebase Firestore Sync with Local Fallback Cache
+ * - Complete Backup & Restore Center (JSON Export/Import, Local Snapshots, CSV Excel Exports)
+ * - Batch Installment Collection Matrix (এককালীন সকলের কিস্তি জমা)
+ * - Digital Member Passbook & Membership ID Card
+ * - Full CRUD Operations (Add, Edit, Delete with Confirmations)
+ * - Animated Counters & Dynamic Chart.js Analytics
+ * - Dual-role Auth: Admin + 1-Click Demo Director + Member Self-Service Lookup
  */
 
 // Bengali number formatting helper
@@ -27,7 +33,7 @@ function toBengaliDigits(str) {
 }
 
 // Animated Numeric Counter for WOW factor
-function animateCounter(elementId, targetValue, prefix = '৳', suffix = '', duration = 600) {
+function animateCounter(elementId, targetValue, prefix = '৳', suffix = '', duration = 500) {
   const el = document.getElementById(elementId);
   if (!el) return;
   const start = 0;
@@ -37,7 +43,6 @@ function animateCounter(elementId, targetValue, prefix = '৳', suffix = '', dur
   function update(currentTime) {
     const elapsed = currentTime - startTime;
     const progress = Math.min(elapsed / duration, 1);
-    // Ease out cubic
     const easeOut = 1 - Math.pow(1 - progress, 3);
     const current = start + (target - start) * easeOut;
 
@@ -85,7 +90,8 @@ const CACHE_KEYS = {
   expenses: 'somiti_cache_expenses',
   otherIncome: 'somiti_cache_otherIncome',
   collections: 'somiti_cache_collections',
-  authDemo: 'somiti_demo_admin_active'
+  authDemo: 'somiti_demo_admin_active',
+  snapshots: 'somiti_local_snapshots'
 };
 
 function getLocalCache(key, fallback = []) {
@@ -111,7 +117,7 @@ const AppState = {
   memberViewMode: 'table', // 'table' or 'cards'
   memberFilterShares: 'all', // 'all', '1', '2-3', '4+'
   memberSortBy: 'id', // 'id', 'name', 'shares', 'savings'
-  deleteTarget: null, // { type: 'members'|'collections'|..., id, docId, title }
+  deleteTarget: null, // { collectionName, identifier, title }
   charts: {
     allocation: null,
     trend: null
@@ -123,11 +129,6 @@ const AppState = {
   otherIncome: getLocalCache(CACHE_KEYS.otherIncome, []),
   collections: getLocalCache(CACHE_KEYS.collections, [])
 };
-
-// Check if current user has admin rights
-function isAdmin() {
-  return Boolean(AppState.currentUser || AppState.isDemoAdmin);
-}
 
 // Calculation helper
 function calculateTotals() {
@@ -144,7 +145,6 @@ function calculateTotals() {
   const totalExpenses = AppState.expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
   const totalOtherIncome = AppState.otherIncome.reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0);
 
-  // Cash in hand = Total savings collected + fees + fines + profits collected + other income + recovered investments - total investments made - total expenses
   const cashInHand = (totalSavings + totalFines + totalFees + totalProfit + totalOtherIncome + recoveredInvestment) - (totalInvestment + totalExpenses);
   const profitPerShare = totalShares > 0 ? (totalProfit / totalShares) : 0;
 
@@ -166,14 +166,15 @@ function calculateTotals() {
 
 // Tab Navigation
 function switchTab(tabId) {
-  const tabs = ['dashboard', 'members', 'collections', 'investments', 'expenses', 'reports'];
+  const tabs = ['dashboard', 'members', 'collections', 'investments', 'expenses', 'reports', 'backup'];
   const titles = {
     'dashboard': 'ড্যাশবোর্ড ওভারভিউ',
     'members': 'সদস্য খতিয়ান ও তালিকা',
     'collections': 'সঞ্চয় ও কিস্তি আদায়',
     'investments': 'বিনিয়োগ ও লভ্যাংশ হিসাব',
     'expenses': 'আয় ও ব্যয় হিসাব',
-    'reports': 'পূর্ণাঙ্গ অডিট ও ব্যালেন্স রিপোর্ট'
+    'reports': 'পূর্ণাঙ্গ অডিট ও ব্যালেন্স রিপোর্ট',
+    'backup': 'ব্যাকআপ, রিস্টোর ও এক্সপোর্ট হাব'
   };
 
   tabs.forEach(tab => {
@@ -204,27 +205,27 @@ function switchTab(tabId) {
   closeMobileMenu();
 
   if (tabId === 'dashboard') {
-    setTimeout(renderCharts, 100);
+    setTimeout(renderCharts, 80);
+  } else if (tabId === 'backup') {
+    renderSnapshotHistory();
   }
 
   if (window.lucide) lucide.createIcons();
 }
 
-// Chart.js Visualizations
+// Dynamic Chart.js Analytics
 function renderCharts() {
   if (typeof Chart === 'undefined') return;
   const stats = calculateTotals();
 
-  // 1. Fund Allocation Doughnut Chart
+  // 1. Fund Allocation Doughnut
   const ctxAlloc = document.getElementById('fundAllocationChart');
   if (ctxAlloc) {
-    if (AppState.charts.allocation) {
-      AppState.charts.allocation.destroy();
-    }
+    if (AppState.charts.allocation) AppState.charts.allocation.destroy();
     AppState.charts.allocation = new Chart(ctxAlloc, {
       type: 'doughnut',
       data: {
-        labels: ['বিনিয়োগ স্থিতি', 'সমিতির ব্যয়', 'তহবিলে নগদ স্থিতি'],
+        labels: ['বিনিয়োগ স্থিতি', 'সমিতির মোট ব্যয়', 'তহবিলে নগদ স্থিতি'],
         datasets: [{
           data: [
             Math.max(0, stats.pendingInvestment),
@@ -242,20 +243,15 @@ function renderCharts() {
         plugins: {
           legend: {
             position: 'bottom',
-            labels: {
-              font: { family: 'Hind Siliguri', size: 12 },
-              padding: 12
-            }
+            labels: { font: { family: 'Hind Siliguri', size: 12 }, padding: 12 }
           },
           tooltip: {
             callbacks: {
-              label: function(context) {
-                return ` ৳${context.parsed.toLocaleString('en-US')}`;
-              }
+              label: (ctx) => ` ৳${ctx.parsed.toLocaleString('en-US')}`
             }
           }
         },
-        cutout: '68%'
+        cutout: '70%'
       }
     });
   }
@@ -263,11 +259,8 @@ function renderCharts() {
   // 2. Collection Trends Bar Chart
   const ctxTrend = document.getElementById('collectionTrendChart');
   if (ctxTrend) {
-    if (AppState.charts.trend) {
-      AppState.charts.trend.destroy();
-    }
+    if (AppState.charts.trend) AppState.charts.trend.destroy();
 
-    // Group collections by month or recent dates
     const dateMap = {};
     AppState.collections.forEach(c => {
       const d = (c.date || '').slice(0, 7) || 'পূর্বের';
@@ -280,9 +273,9 @@ function renderCharts() {
     AppState.charts.trend = new Chart(ctxTrend, {
       type: 'bar',
       data: {
-        labels: labels.length > 0 ? labels : ['কোন রেকর্ড নেই'],
+        labels: labels.length > 0 ? labels : ['রেকর্ড নেই'],
         datasets: [{
-          label: 'মাসিক সঞ্চয় আদায় (৳)',
+          label: 'মাসিক সঞ্চয় আদায়',
           data: dataVals.length > 0 ? dataVals : [0],
           backgroundColor: '#059669',
           borderRadius: 8,
@@ -296,9 +289,7 @@ function renderCharts() {
           y: {
             beginAtZero: true,
             ticks: {
-              callback: function(val) {
-                return '৳' + val.toLocaleString('en-US');
-              },
+              callback: (v) => '৳' + v.toLocaleString('en-US'),
               font: { family: 'Outfit', size: 10 }
             },
             grid: { color: '#f1f5f9' }
@@ -312,9 +303,7 @@ function renderCharts() {
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: function(context) {
-                return ` আদায়: ৳${context.parsed.y.toLocaleString('en-US')}`;
-              }
+              label: (ctx) => ` আদায়: ৳${ctx.parsed.y.toLocaleString('en-US')}`
             }
           }
         }
@@ -323,39 +312,30 @@ function renderCharts() {
   }
 }
 
-// Render Dashboard
+// Render Dashboard View
 function renderDashboard() {
   const stats = calculateTotals();
 
-  // Run animated counters
   animateCounter('stat-total-savings', stats.totalSavings, '৳');
   animateCounter('stat-total-investment', stats.pendingInvestment, '৳');
   animateCounter('stat-total-profit', stats.totalProfit, '৳');
   animateCounter('stat-cash-in-hand', stats.cashInHand, '৳');
 
-  const elShares = document.getElementById('stat-total-shares');
-  if (elShares) elShares.innerText = formatBengaliNumber(stats.totalShares) + ' টি মোট শেয়ার';
+  const setEl = (id, txt) => {
+    const el = document.getElementById(id);
+    if (el) el.innerText = txt;
+  };
 
-  const elMemberCount = document.getElementById('stat-member-count');
-  if (elMemberCount) elMemberCount.innerText = formatBengaliNumber(AppState.members.length) + ' জন';
+  setEl('stat-total-shares', formatBengaliNumber(stats.totalShares) + ' টি মোট শেয়ার');
+  setEl('stat-member-count', formatBengaliNumber(AppState.members.length) + ' জন');
+  setEl('stat-fees-collected', '৳' + formatBengaliNumber(stats.totalFines + stats.totalFees));
+  setEl('stat-total-expense', '৳' + formatBengaliNumber(stats.totalExpenses));
+  setEl('stat-profit-per-share', '৳' + formatBengaliNumber(stats.profitPerShare.toFixed(2)));
 
-  const elFees = document.getElementById('stat-fees-collected');
-  if (elFees) elFees.innerText = '৳' + formatBengaliNumber(stats.totalFines + stats.totalFees);
+  setEl('calc-profit-per-share-display', '৳' + formatBengaliNumber(stats.profitPerShare.toFixed(2)));
+  setEl('calc-total-shares-note', 'মোট শেয়ার: ' + formatBengaliNumber(stats.totalShares) + ' টি');
 
-  const elExp = document.getElementById('stat-total-expense');
-  if (elExp) elExp.innerText = '৳' + formatBengaliNumber(stats.totalExpenses);
-
-  const elProfitShare = document.getElementById('stat-profit-per-share');
-  if (elProfitShare) elProfitShare.innerText = '৳' + formatBengaliNumber(stats.profitPerShare.toFixed(2));
-
-  // Dividend Display
-  const elCalcShare = document.getElementById('calc-profit-per-share-display');
-  if (elCalcShare) elCalcShare.innerText = '৳' + formatBengaliNumber(stats.profitPerShare.toFixed(2));
-
-  const elCalcSharesNote = document.getElementById('calc-total-shares-note');
-  if (elCalcSharesNote) elCalcSharesNote.innerText = 'মোট শেয়ার: ' + formatBengaliNumber(stats.totalShares) + ' টি';
-
-  // Dashboard preview of top 5 members
+  // Preview table
   const previewEl = document.getElementById('dashboard-members-preview');
   if (previewEl) {
     previewEl.innerHTML = '';
@@ -371,7 +351,7 @@ function renderDashboard() {
           <td class="py-2.5 px-3 text-center">
             <span class="px-2 py-0.5 bg-slate-100 font-bold rounded text-xs text-slate-700">${formatBengaliNumber(m.shares)}</span>
           </td>
-          <td class="py-2.5 px-3 text-right font-bold text-slate-900">৳${formatBengaliNumber(m.savings)}</td>
+          <td class="py-2.5 px-3 text-right font-bold text-slate-900 font-num">৳${formatBengaliNumber(m.savings)}</td>
           <td class="py-2.5 px-3 text-center">
             <button onclick="viewMemberLedger('${m._docId || m.id}')" class="text-xs text-emerald-600 hover:text-emerald-800 font-semibold underline">লেজার</button>
           </td>
@@ -418,7 +398,6 @@ function getFilteredAndSortedMembers() {
 
     if (!matchSearch) return false;
 
-    // Share Category Filter
     if (AppState.memberFilterShares === '1') return Number(m.shares) === 1;
     if (AppState.memberFilterShares === '2-3') return Number(m.shares) >= 2 && Number(m.shares) <= 3;
     if (AppState.memberFilterShares === '4+') return Number(m.shares) >= 4;
@@ -426,31 +405,23 @@ function getFilteredAndSortedMembers() {
     return true;
   });
 
-  // Sorting
   list = list.slice().sort((a, b) => {
-    if (AppState.memberSortBy === 'name') {
-      return (a.name || '').localeCompare(b.name || '');
-    }
-    if (AppState.memberSortBy === 'shares') {
-      return (Number(b.shares) || 0) - (Number(a.shares) || 0);
-    }
-    if (AppState.memberSortBy === 'savings') {
-      return (Number(b.savings) || 0) - (Number(a.savings) || 0);
-    }
-    // Default by ID
+    if (AppState.memberSortBy === 'name') return (a.name || '').localeCompare(b.name || '');
+    if (AppState.memberSortBy === 'shares') return (Number(b.shares) || 0) - (Number(a.shares) || 0);
+    if (AppState.memberSortBy === 'savings') return (Number(b.savings) || 0) - (Number(a.savings) || 0);
     return (a.id || '').localeCompare(b.id || '');
   });
 
   return list;
 }
 
-// Render Members View (Both Table & Card Grid)
+// Render Members View
 function renderMembersTable() {
   const tbody = document.getElementById('members-table-body');
   const cardsContainer = document.getElementById('members-cards-container');
   const filtered = getFilteredAndSortedMembers();
 
-  // 1. Table View Rendering
+  // 1. Table View
   if (tbody) {
     tbody.innerHTML = '';
     if (filtered.length === 0) {
@@ -481,6 +452,9 @@ function renderMembersTable() {
             <button onclick="quickCollect('${m._docId || m.id}')" class="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded text-xs font-semibold transition" title="কিস্তি জমা">
               জমা
             </button>
+            <button onclick="openMemberIdCard('${m._docId || m.id}')" class="px-2 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded text-xs font-semibold transition" title="আইডি কার্ড">
+              কার্ড
+            </button>
             <button onclick="openEditMemberModal('${m._docId || m.id}')" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded text-xs font-semibold transition" title="সংশোধন">
               এডিট
             </button>
@@ -494,7 +468,7 @@ function renderMembersTable() {
     }
   }
 
-  // 2. Card Grid View Rendering
+  // 2. Card Grid View
   if (cardsContainer) {
     cardsContainer.innerHTML = '';
     if (filtered.length === 0) {
@@ -536,7 +510,10 @@ function renderMembersTable() {
               লেজার
             </button>
             <button onclick="quickCollect('${m._docId || m.id}')" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs transition text-center">
-              জমা নিন
+              জমা
+            </button>
+            <button onclick="openMemberIdCard('${m._docId || m.id}')" class="px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg text-xs font-semibold" title="ডিজিটাল কার্ড">
+              কার্ড
             </button>
             <button onclick="openEditMemberModal('${m._docId || m.id}')" class="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold" title="এডিট">
               <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
@@ -548,7 +525,7 @@ function renderMembersTable() {
     }
   }
 
-  // Update Member Select dropdown in collection form
+  // Update dropdown in single collection form
   const select = document.getElementById('collect-member-select');
   if (select) {
     const currentVal = select.value;
@@ -769,16 +746,12 @@ function closeModal(id) {
 // Mobile Drawer
 function toggleMobileMenu() {
   const sidebar = document.getElementById('main-sidebar');
-  if (sidebar) {
-    sidebar.classList.toggle('hidden');
-  }
+  if (sidebar) sidebar.classList.toggle('hidden');
 }
 
 function closeMobileMenu() {
   const sidebar = document.getElementById('main-sidebar');
-  if (sidebar && window.innerWidth < 768) {
-    sidebar.classList.add('hidden');
-  }
+  if (sidebar && window.innerWidth < 768) sidebar.classList.add('hidden');
 }
 
 // Quick Date buttons
@@ -818,7 +791,7 @@ function onMemberSelectChange() {
   }
 }
 
-// Handle Save Collection (Installment)
+// Handle Save Single Collection
 async function handleSaveCollection(e) {
   e.preventDefault();
   const select = document.getElementById('collect-member-select');
@@ -830,7 +803,7 @@ async function handleSaveCollection(e) {
   const remarks = document.getElementById('collect-remarks').value || 'নিয়মিত কিস্তি জমা';
 
   if (!memberId || !date || savings <= 0) {
-    showToast('দয়া করে সদস্য এবং সঠিক জমার পরিমাণ নির্বাচন করুন', 'error');
+    showToast('সদস্য এবং সঠিক জমার পরিমাণ নির্বাচন করুন', 'error');
     return;
   }
 
@@ -893,11 +866,108 @@ async function handleSaveCollection(e) {
     showReceiptModal(receiptId, newCollection);
   } catch (err) {
     console.error('Error saving collection:', err);
-    showToast('কিস্তি সংরক্ষণে সমস্যা হয়েছে: ' + err.message, 'error');
+    showToast('কিস্তি সংরক্ষণে সমস্যা: ' + err.message, 'error');
   }
 }
 
-// Show Receipt Modal (with dual copy print: Office Copy & Customer Copy)
+// BATCH COLLECTION MATRIX (এককালীন সকলের মাসিক কিস্তি জমা)
+function openBatchCollectionModal() {
+  const container = document.getElementById('batch-members-list');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  document.getElementById('batch-date').value = todayStr;
+
+  AppState.members.forEach(m => {
+    const suggested = (Number(m.shares) || 1) * 1000;
+    const row = document.createElement('tr');
+    row.className = 'border-b border-slate-100 text-xs';
+    row.innerHTML = `
+      <td class="py-2 px-3 text-slate-500 font-semibold">${m.id}</td>
+      <td class="py-2 px-3 font-bold text-slate-800">${m.name}</td>
+      <td class="py-2 px-3 text-center">${formatBengaliNumber(m.shares)}</td>
+      <td class="py-2 px-3 text-right">
+        <input type="number" data-member-id="${m._docId || m.id}" class="batch-savings-input w-24 px-2 py-1 border border-slate-300 rounded text-right font-num" value="${suggested}" min="0" />
+      </td>
+      <td class="py-2 px-3 text-center">
+        <input type="checkbox" checked data-member-id="${m._docId || m.id}" class="batch-include-check w-4 h-4 text-emerald-600 rounded" />
+      </td>
+    `;
+    container.appendChild(row);
+  });
+
+  openModal('batchCollectionModal');
+}
+
+async function handleSaveBatchCollections() {
+  const date = document.getElementById('batch-date').value;
+  const remarks = document.getElementById('batch-remarks').value || 'মাসিক ব্যাচ কিস্তি আদায়';
+  const checks = document.querySelectorAll('.batch-include-check:checked');
+
+  if (checks.length === 0) {
+    showToast('কমপক্ষে একজন সদস্য সিলেক্ট করুন', 'error');
+    return;
+  }
+
+  try {
+    let count = 0;
+    for (const check of checks) {
+      const memberId = check.getAttribute('data-member-id');
+      const member = AppState.members.find(m => (m._docId === memberId || m.id === memberId));
+      if (!member) continue;
+
+      const input = document.querySelector(`.batch-savings-input[data-member-id="${memberId}"]`);
+      const savings = Number(input ? input.value : 0) || 0;
+      if (savings <= 0) continue;
+
+      const receiptId = 'REC-' + (AppState.collections.length + 101 + count);
+      const newCollection = {
+        receiptId,
+        id: receiptId,
+        date,
+        memberId: member.id || memberId,
+        memberDocId: member._docId || null,
+        memberName: member.name,
+        savings,
+        fine: 0,
+        fee: 0,
+        total: savings,
+        remarks
+      };
+
+      if (window.FirebaseService) {
+        await window.FirebaseService.addDoc('collections', newCollection);
+        const newSavings = (Number(member.savings) || 0) + savings;
+        const newInst = (Number(member.installments) || 0) + 1;
+        if (member._docId) {
+          await window.FirebaseService.updateDoc('members', member._docId, {
+            savings: newSavings,
+            installments: newInst
+          });
+        }
+      } else {
+        AppState.collections.push(newCollection);
+        member.savings = (Number(member.savings) || 0) + savings;
+        member.installments = (Number(member.installments) || 0) + 1;
+      }
+      count++;
+    }
+
+    if (!window.FirebaseService) {
+      setLocalCache(CACHE_KEYS.collections, AppState.collections);
+      setLocalCache(CACHE_KEYS.members, AppState.members);
+      renderAll();
+    }
+
+    showToast(`একসাথে ${count} জন সদস্যের কিস্তি সফলভাবে জমা হয়েছে!`, 'success');
+    closeModal('batchCollectionModal');
+  } catch (err) {
+    showToast('ব্যাচ কিস্তি জমার সময় ত্রুটি: ' + err.message, 'error');
+  }
+}
+
+// Show Receipt Modal
 function showReceiptModal(receiptId, directData = null) {
   const c = directData || AppState.collections.find(item => (item.receiptId === receiptId || item.id === receiptId || item._docId === receiptId));
   if (!c) return;
@@ -945,7 +1015,7 @@ function viewMemberLedger(memberIdentifier) {
   if (tbody) {
     tbody.innerHTML = '';
     if (memberTx.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 text-xs">কোন সাম্প্রতিক কিস্তি জমা রেকর্ড নেই (প্রাথমিক ব্যালেন্স সংরক্ষিত)</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 text-xs">কোন সাম্প্রতিক কিস্তি জমা রেকর্ড নেই</td></tr>`;
     } else {
       memberTx.forEach(tx => {
         const tr = document.createElement('tr');
@@ -963,6 +1033,25 @@ function viewMemberLedger(memberIdentifier) {
   }
 
   openModal('memberLedgerModal');
+}
+
+// DIGITAL MEMBERSHIP CARD MODAL (ডিজিটাল সদস্য পরিচয়পত্র)
+function openMemberIdCard(memberIdentifier) {
+  const member = AppState.members.find(m => (m._docId === memberIdentifier || m.id === memberIdentifier));
+  if (!member) return;
+
+  const setEl = (id, text) => {
+    const el = document.getElementById(id);
+    if (el) el.innerText = text;
+  };
+
+  setEl('idcard-name', member.name);
+  setEl('idcard-code', member.id);
+  setEl('idcard-phone', member.phone || '–');
+  setEl('idcard-shares', `${formatBengaliNumber(member.shares)} টি শেয়ার`);
+  setEl('idcard-savings', '৳' + formatBengaliNumber(member.savings));
+
+  openModal('memberIdCardModal');
 }
 
 // Add New Member
@@ -1033,12 +1122,7 @@ async function handleUpdateMember(e) {
   const member = AppState.members.find(m => (m._docId === docIdOrCode || m.id === docIdOrCode));
   if (!member) return;
 
-  const updatedData = {
-    name,
-    phone,
-    shares,
-    savings
-  };
+  const updatedData = { name, phone, shares, savings };
 
   try {
     if (window.FirebaseService && member._docId) {
@@ -1091,7 +1175,7 @@ async function executeDelete() {
       renderAll();
     }
 
-    showToast(`"${title}" সফলভাবে মুছে ফেলা হয়েছে`);
+    showToast(`"${title}" মুছে ফেলা হয়েছে`);
     closeModal('deleteConfirmModal');
     AppState.deleteTarget = null;
   } catch (err) {
@@ -1134,7 +1218,6 @@ function handleMemberPortalLookup(e) {
   document.getElementById('portal-m-profit').innerText = '৳' + formatBengaliNumber(memberProfit.toFixed(2));
   document.getElementById('portal-m-total').innerText = '৳' + formatBengaliNumber(totalWorth.toFixed(2));
 
-  // Render recent 5 transactions for this member
   const txs = AppState.collections.filter(c => (c.memberId === member.id || c.memberDocId === member._docId));
   const tbody = document.getElementById('portal-history-body');
   tbody.innerHTML = '';
@@ -1179,11 +1262,11 @@ async function handleSaveInvestment(e) {
       setLocalCache(CACHE_KEYS.investments, AppState.investments);
       renderAll();
     }
-    showToast('নতুন বিনিয়োগ সফলভাবে সংরক্ষিত হয়েছে!');
+    showToast('নতুন বিনিয়োগ সংরক্ষিত হয়েছে!');
     closeModal('investmentModal');
     document.getElementById('investmentForm').reset();
   } catch (err) {
-    showToast('বিনিয়োগ সংরক্ষণে সমস্যা হয়েছে: ' + err.message, 'error');
+    showToast('বিনিয়োগ সংরক্ষণে সমস্যা: ' + err.message, 'error');
   }
 }
 
@@ -1277,11 +1360,15 @@ async function handleSaveIncome(e) {
   }
 }
 
-// Export All Data JSON Backup
+// ==================== BACKUP & RESTORE CENTER ====================
+
+// 1. Full System JSON Export
 function exportDataJSON() {
   const data = {
-    appName: 'Somiti Management System',
+    appName: 'Somiti Cooperative Management System',
+    version: '2.0',
     exportedAt: new Date().toISOString(),
+    stats: calculateTotals(),
     members: AppState.members,
     investments: AppState.investments,
     profits: AppState.profits,
@@ -1293,29 +1380,144 @@ function exportDataJSON() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `Somiti_Cloud_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = `Somiti_Full_Backup_${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
-  showToast('ব্যাকআপ ফাইল সফলভাবে ডাউনলোড হয়েছে');
+  showToast('সম্পূর্ণ JSON ব্যাকআপ ফাইল ডাউনলোড সম্পন্ন হয়েছে');
 }
 
-// Export Members CSV for Excel
+// 2. CSV Exports for Excel
 function exportMembersCSV() {
-  let csvContent = "\uFEFFকোড,নাম,মোবাইল,শেয়ার,মোট সঞ্চয়,জরিমানা,ফি,মোট কিস্তি\n";
+  let csv = "\uFEFFসদস্য কোড,সদস্যের নাম,মোবাইল নম্বর,শেয়ার সংখ্যা,মোট সঞ্চয়,জরিমানা,ভর্তি ফি,মোট কিস্তি\n";
   AppState.members.forEach(m => {
-    csvContent += `"${m.id}","${m.name}","${m.phone || ''}",${m.shares},${m.savings},${m.fine || 0},${m.fee || 0},${m.installments || 0}\n`;
+    csv += `"${m.id}","${m.name}","${m.phone || ''}",${m.shares},${m.savings},${m.fine || 0},${m.fee || 0},${m.installments || 0}\n`;
   });
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  downloadCSV(csv, `Somiti_Members_${new Date().toISOString().slice(0, 10)}.csv`);
+  showToast('সদস্য তালিকা CSV ফাইল ডাউনলোড হয়েছে');
+}
+
+function exportCollectionsCSV() {
+  let csv = "\uFEFFরশিদ নং,তারিখ,সদস্য কোড,সদস্যের নাম,সঞ্চয় জমা,জরিমানা,ফি,সর্বমোট,মন্তব্য\n";
+  AppState.collections.forEach(c => {
+    csv += `"${c.receiptId || c.id}","${c.date}","${c.memberId}","${c.memberName}",${c.savings},${c.fine || 0},${c.fee || 0},${c.total},"${c.remarks || ''}"\n`;
+  });
+  downloadCSV(csv, `Somiti_Collections_Log_${new Date().toISOString().slice(0, 10)}.csv`);
+  showToast('কিস্তি আদায় খতিয়ান CSV ফাইল ডাউনলোড হয়েছে');
+}
+
+function exportAuditCSV() {
+  const s = calculateTotals();
+  let csv = "\uFEFFহিসাবের খাত,পরিমাণ (টাকা)\n";
+  csv += `মোট সঞ্চয় জমা,${s.totalSavings}\n`;
+  csv += `জরিমানা ও ফি আদায়,${s.totalFines + s.totalFees}\n`;
+  csv += `অর্জিত মোট মুনাফা,${s.totalProfit}\n`;
+  csv += `বিবিধ আয় ও সুদ,${s.totalOtherIncome}\n`;
+  csv += `বর্তমান বিনিয়োগ স্থিতি,${s.pendingInvestment}\n`;
+  csv += `সমিতির সর্বমোট ব্যয়,${s.totalExpenses}\n`;
+  csv += `তহবিলে নগদ স্থিতি,${s.cashInHand}\n`;
+  downloadCSV(csv, `Somiti_Financial_Audit_${new Date().toISOString().slice(0, 10)}.csv`);
+  showToast('আর্থিক অডিট রিপোর্ট CSV ফাইল ডাউনলোড হয়েছে');
+}
+
+function downloadCSV(content, filename) {
+  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `Somiti_Members_List_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
-  showToast('সদস্য তালিকা CSV ফাইল ডাউনলোড সম্পন্ন হয়েছে');
 }
 
-// Import & Restore from JSON Backup
+// 3. Local Instant Snapshot (অফলাইন দ্রুত স্ন্যাপশট সংরক্ষণ)
+function saveLocalSnapshot() {
+  const snapshots = getLocalCache(CACHE_KEYS.snapshots, []);
+  const newSnapshot = {
+    id: 'SNAP-' + Date.now(),
+    timestamp: new Date().toLocaleString('bn-BD'),
+    memberCount: AppState.members.length,
+    collectionCount: AppState.collections.length,
+    data: {
+      members: AppState.members,
+      investments: AppState.investments,
+      profits: AppState.profits,
+      expenses: AppState.expenses,
+      otherIncome: AppState.otherIncome,
+      collections: AppState.collections
+    }
+  };
+  snapshots.unshift(newSnapshot);
+  // Keep last 5 snapshots
+  if (snapshots.length > 5) snapshots.pop();
+  setLocalCache(CACHE_KEYS.snapshots, snapshots);
+  renderSnapshotHistory();
+  showToast('ব্রাউজারে বর্তমান অবস্থার স্ন্যাপশট সংরক্ষিত হয়েছে!');
+}
+
+function renderSnapshotHistory() {
+  const tbody = document.getElementById('snapshot-history-body');
+  if (!tbody) return;
+  const snapshots = getLocalCache(CACHE_KEYS.snapshots, []);
+  tbody.innerHTML = '';
+
+  if (snapshots.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-slate-400 text-xs">কোন স্থানীয় স্ন্যাপশট সংরক্ষিত নেই</td></tr>`;
+    return;
+  }
+
+  snapshots.forEach((snap, idx) => {
+    const tr = document.createElement('tr');
+    tr.className = 'border-b border-slate-100 text-xs hover:bg-slate-50';
+    tr.innerHTML = `
+      <td class="py-2.5 px-3 font-semibold text-slate-700">${snap.timestamp}</td>
+      <td class="py-2.5 px-3 text-slate-600">${formatBengaliNumber(snap.memberCount)} জন সদস্য</td>
+      <td class="py-2.5 px-3 text-slate-600">${formatBengaliNumber(snap.collectionCount)} টি কিস্তি</td>
+      <td class="py-2.5 px-3 text-center space-x-2">
+        <button onclick="restoreLocalSnapshot('${snap.id}')" class="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold rounded text-[11px]">
+          রিস্টোর
+        </button>
+        <button onclick="deleteLocalSnapshot('${snap.id}')" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded text-[11px]">
+          মুছুন
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function restoreLocalSnapshot(snapId) {
+  if (!confirm('আপনি কি এই স্ন্যাপশট থেকে ডাটা রিস্টোর করতে চান?')) return;
+  const snapshots = getLocalCache(CACHE_KEYS.snapshots, []);
+  const snap = snapshots.find(s => s.id === snapId);
+  if (!snap || !snap.data) return;
+
+  AppState.members = snap.data.members || [];
+  AppState.collections = snap.data.collections || [];
+  AppState.investments = snap.data.investments || [];
+  AppState.profits = snap.data.profits || [];
+  AppState.expenses = snap.data.expenses || [];
+  AppState.otherIncome = snap.data.otherIncome || [];
+
+  setLocalCache(CACHE_KEYS.members, AppState.members);
+  setLocalCache(CACHE_KEYS.collections, AppState.collections);
+  setLocalCache(CACHE_KEYS.investments, AppState.investments);
+  setLocalCache(CACHE_KEYS.profits, AppState.profits);
+  setLocalCache(CACHE_KEYS.expenses, AppState.expenses);
+  setLocalCache(CACHE_KEYS.otherIncome, AppState.otherIncome);
+
+  renderAll();
+  showToast('স্ন্যাপশট সফলভাবে রিস্টোর হয়েছে!', 'success');
+}
+
+function deleteLocalSnapshot(snapId) {
+  let snapshots = getLocalCache(CACHE_KEYS.snapshots, []);
+  snapshots = snapshots.filter(s => s.id !== snapId);
+  setLocalCache(CACHE_KEYS.snapshots, snapshots);
+  renderSnapshotHistory();
+  showToast('স্ন্যাপশট মুছে ফেলা হয়েছে');
+}
+
+// 4. Import & Restore from JSON File
 async function handleImportJSON(file) {
   if (!file) return;
   const reader = new FileReader();
@@ -1343,9 +1545,10 @@ async function handleImportJSON(file) {
         showToast('লোকাল ক্যাশে ব্যাকআপ রিস্টোর সফল হয়েছে!', 'success');
       }
       closeModal('backupRestoreModal');
+      renderSnapshotHistory();
     } catch (err) {
       console.error('Import error:', err);
-      showToast('ফাইল পড়তে সমস্যা হয়েছে: ' + err.message, 'error');
+      showToast('ফাইল পড়তে সমস্যা: ' + err.message, 'error');
     }
   };
   reader.readAsText(file);
@@ -1401,7 +1604,7 @@ async function handleAdminLogin(e) {
   }
 }
 
-// Quick 1-Click Demo Admin Login
+// 1-Click Demo Admin Mode
 function loginAsDemoAdmin() {
   AppState.isDemoAdmin = true;
   AppState.currentUser = { email: 'demo.admin@somiti.org', displayName: 'ডেমো পরিচালক' };
@@ -1466,7 +1669,6 @@ function initializeFirebaseListeners() {
     }
   };
 
-  // Auth state listener
   window.FirebaseService.onAuthState((user) => {
     if (user) {
       AppState.isDemoAdmin = false;
@@ -1479,7 +1681,6 @@ function initializeFirebaseListeners() {
     }
   });
 
-  // Listen to members
   window.FirebaseService.listenToCollection('members', (items) => {
     updateCloudStatus(true);
     AppState.members = items;
@@ -1496,7 +1697,6 @@ function initializeFirebaseListeners() {
     updateCloudStatus(false);
   });
 
-  // Listen to collections
   window.FirebaseService.listenToCollection('collections', (items) => {
     AppState.collections = items;
     setLocalCache(CACHE_KEYS.collections, items);
@@ -1505,7 +1705,6 @@ function initializeFirebaseListeners() {
     renderReports();
   });
 
-  // Listen to investments
   window.FirebaseService.listenToCollection('investments', (items) => {
     AppState.investments = items;
     setLocalCache(CACHE_KEYS.investments, items);
@@ -1514,7 +1713,6 @@ function initializeFirebaseListeners() {
     renderReports();
   });
 
-  // Listen to profits
   window.FirebaseService.listenToCollection('profits', (items) => {
     AppState.profits = items;
     setLocalCache(CACHE_KEYS.profits, items);
@@ -1523,7 +1721,6 @@ function initializeFirebaseListeners() {
     renderReports();
   });
 
-  // Listen to expenses
   window.FirebaseService.listenToCollection('expenses', (items) => {
     AppState.expenses = items;
     setLocalCache(CACHE_KEYS.expenses, items);
@@ -1532,7 +1729,6 @@ function initializeFirebaseListeners() {
     renderReports();
   });
 
-  // Listen to other_income
   window.FirebaseService.listenToCollection('other_income', (items) => {
     AppState.otherIncome = items;
     setLocalCache(CACHE_KEYS.otherIncome, items);
@@ -1545,7 +1741,7 @@ function initializeFirebaseListeners() {
 // Window Load Init
 window.addEventListener('DOMContentLoaded', () => {
   const todayStr = new Date().toISOString().slice(0, 10);
-  ['collect-date', 'prf-date', 'exp-date', 'inc-date'].forEach(id => {
+  ['collect-date', 'prf-date', 'exp-date', 'inc-date', 'batch-date'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = todayStr;
   });
@@ -1553,6 +1749,22 @@ window.addEventListener('DOMContentLoaded', () => {
   if (AppState.isDemoAdmin) {
     updateAuthUI({ email: 'demo.admin@somiti.org' });
   }
+
+  // Keyboard Shortcuts: Ctrl+K or / focuses search, Alt+N new member, Alt+C collection
+  window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey && e.key === 'k') || (e.key === '/' && document.activeElement.tagName !== 'INPUT')) {
+      e.preventDefault();
+      switchTab('members');
+      const search = document.getElementById('memberSearchInput');
+      if (search) search.focus();
+    } else if (e.altKey && e.key.toLowerCase() === 'n') {
+      e.preventDefault();
+      openModal('memberModal');
+    } else if (e.altKey && e.key.toLowerCase() === 'c') {
+      e.preventDefault();
+      openModal('collectionModal');
+    }
+  });
 
   switchTab('dashboard');
   renderAll();
@@ -1566,7 +1778,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Expose globals for UI attributes
+// Expose globals for UI inline attributes
 window.switchTab = switchTab;
 window.openModal = openModal;
 window.closeModal = closeModal;
@@ -1578,8 +1790,11 @@ window.quickCollect = quickCollect;
 window.onMemberSelectChange = onMemberSelectChange;
 window.setQuickDate = setQuickDate;
 window.handleSaveCollection = handleSaveCollection;
+window.openBatchCollectionModal = openBatchCollectionModal;
+window.handleSaveBatchCollections = handleSaveBatchCollections;
 window.showReceiptModal = showReceiptModal;
 window.viewMemberLedger = viewMemberLedger;
+window.openMemberIdCard = openMemberIdCard;
 window.handleSaveMember = handleSaveMember;
 window.openEditMemberModal = openEditMemberModal;
 window.handleUpdateMember = handleUpdateMember;
@@ -1592,6 +1807,11 @@ window.handleSaveExpense = handleSaveExpense;
 window.handleSaveIncome = handleSaveIncome;
 window.exportDataJSON = exportDataJSON;
 window.exportMembersCSV = exportMembersCSV;
+window.exportCollectionsCSV = exportCollectionsCSV;
+window.exportAuditCSV = exportAuditCSV;
+window.saveLocalSnapshot = saveLocalSnapshot;
+window.restoreLocalSnapshot = restoreLocalSnapshot;
+window.deleteLocalSnapshot = deleteLocalSnapshot;
 window.handleImportJSON = handleImportJSON;
 window.triggerCloudSeed = triggerCloudSeed;
 window.handleAdminLogin = handleAdminLogin;
