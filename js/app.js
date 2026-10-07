@@ -361,7 +361,77 @@ function renderDashboard() {
     }
   }
 
+  // Dynamic User Investment Breakdown in Dashboard
+  renderDashboardInvestments(stats);
+
   renderCharts();
+}
+
+// Render Exact User Investment Records and Fund Stats in Dashboard
+function renderDashboardInvestments(stats) {
+  const container = document.getElementById('dashboard-investments-container');
+  const countBadge = document.getElementById('dash-inv-count-badge');
+  const totalAmountEl = document.getElementById('dash-total-inv-amount');
+  const totalRecoveredEl = document.getElementById('dash-total-inv-recovered');
+
+  if (countBadge) {
+    countBadge.innerText = `${formatBengaliNumber(AppState.investments.length)} টি খাত`;
+  }
+  if (totalAmountEl) {
+    totalAmountEl.innerText = `৳${formatBengaliNumber(stats.totalInvestment)}`;
+  }
+  if (totalRecoveredEl) {
+    totalRecoveredEl.innerText = `৳${formatBengaliNumber(stats.recoveredInvestment)}`;
+  }
+
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (AppState.investments.length === 0) {
+    container.innerHTML = `
+      <div class="p-4 bg-slate-50 border border-dashed border-slate-200 rounded-xl text-center text-xs text-slate-500">
+        কোন বিনিয়োগ রেকর্ড নেই। "নতুন বিনিয়োগ" বোতামে ক্লিক করে খাত যুক্ত করুন।
+      </div>
+    `;
+    return;
+  }
+
+  AppState.investments.forEach(inv => {
+    const amount = Number(inv.amount) || 0;
+    const recovered = Number(inv.recovered) || 0;
+    const pending = Math.max(0, amount - recovered);
+    const pct = amount > 0 ? Math.min(100, Math.round((recovered / amount) * 100)) : 0;
+    
+    let statusBadge = '';
+    let barColor = 'bg-amber-500';
+    if (pct >= 100) {
+      statusBadge = '<span class="text-[10px] px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded-full">সম্পূর্ণ পরিশোধিত</span>';
+      barColor = 'bg-emerald-500';
+    } else if (pct > 0) {
+      statusBadge = `<span class="text-[10px] px-2 py-0.5 bg-blue-100 text-blue-800 font-bold rounded-full">${formatBengaliNumber(pct)}% আদায়</span>`;
+      barColor = 'bg-blue-500';
+    } else {
+      statusBadge = '<span class="text-[10px] px-2 py-0.5 bg-amber-100 text-amber-800 font-bold rounded-full">বকেয়া স্থিতি</span>';
+      barColor = 'bg-amber-500';
+    }
+
+    const item = document.createElement('div');
+    item.className = 'p-3 bg-slate-50/80 hover:bg-slate-100/80 border border-slate-200/80 rounded-xl transition';
+    item.innerHTML = `
+      <div class="flex items-center justify-between gap-2 mb-1">
+        <span class="font-semibold text-slate-800 text-xs truncate" title="${inv.title}">${inv.title}</span>
+        ${statusBadge}
+      </div>
+      <div class="flex items-center justify-between text-xs text-slate-600 mb-1.5 font-num">
+        <span>বিনিয়োগ: ৳${formatBengaliNumber(amount)}</span>
+        <span class="font-bold text-amber-800">অবশিষ্ট: ৳${formatBengaliNumber(pending)}</span>
+      </div>
+      <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+        <div class="${barColor} h-1.5 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+      </div>
+    `;
+    container.appendChild(item);
+  });
 }
 
 // Member View Mode (Table vs Cards)
@@ -1429,6 +1499,354 @@ function downloadCSV(content, filename) {
   URL.revokeObjectURL(url);
 }
 
+// ==================== CSV / EXCEL IMPORT & TEMPLATES ====================
+
+// Toggle dropdown menu for template download
+function toggleTemplateDropdown() {
+  const menu = document.getElementById('template-dropdown-menu');
+  if (menu) menu.classList.toggle('hidden');
+}
+
+// Download sample template (Excel .xlsx or CSV with BOM)
+function downloadCollectionTemplate(format = 'excel') {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  
+  // Use current active members from society, or demo members if none
+  const sourceMembers = AppState.members.length > 0 ? AppState.members : [
+    { id: 'M-01', name: 'মোঃ আক্তারুজ্জামান', shares: 2 },
+    { id: 'M-02', name: 'দেলোয়ার হোসেন ভূঁইয়া', shares: 1 },
+    { id: 'M-03', name: 'মোঃ লোকমান', shares: 3 }
+  ];
+
+  const sampleRows = sourceMembers.map(m => ({
+    'সদস্য আইডি': m.id || '',
+    'সদস্যের নাম': m.name || '',
+    'তারিখ': todayStr,
+    'সঞ্চয় জমা': (Number(m.shares) || 1) * 1000,
+    'জরিমানা': 0,
+    'ফি': 0,
+    'মন্তব্য': 'নিয়মিত মাসিক কিস্তি'
+  }));
+
+  if (format === 'excel' && typeof XLSX !== 'undefined') {
+    const ws = XLSX.utils.json_to_sheet(sampleRows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'কিস্তি আদায় নমুনা');
+    XLSX.writeFile(wb, `Somiti_Installments_Template_${todayStr}.xlsx`);
+    showToast('নমুনা Excel ফাইল ডাউনলোড সম্পন্ন হয়েছে');
+  } else {
+    let csv = "\uFEFFসদস্য আইডি,সদস্যের নাম,তারিখ,সঞ্চয় জমা,জরিমানা,ফি,মন্তব্য\n";
+    sampleRows.forEach(r => {
+      csv += `"${r['সদস্য আইডি']}","${r['সদস্যের নাম']}","${r['তারিখ']}",${r['সঞ্চয় জমা']},${r['জরিমানা']},${r['ফি']},"${r['মন্তব্য']}"\n`;
+    });
+    downloadCSV(csv, `Somiti_Installments_Template_${todayStr}.csv`);
+    showToast('নমুনা CSV ফাইল ডাউনলোড সম্পন্ন হয়েছে');
+  }
+
+  const menu = document.getElementById('template-dropdown-menu');
+  if (menu) menu.classList.add('hidden');
+}
+
+// Open and reset import modal
+function openImportCollectionsModal() {
+  resetImportModal();
+  openModal('importCollectionsModal');
+}
+
+function resetImportModal() {
+  AppState.importPreviewRows = [];
+  const fileInput = document.getElementById('collection-file-input');
+  if (fileInput) fileInput.value = '';
+  
+  const previewSection = document.getElementById('import-preview-section');
+  if (previewSection) previewSection.classList.add('hidden');
+  
+  const dropzone = document.getElementById('import-dropzone');
+  if (dropzone) dropzone.classList.remove('hidden');
+
+  const btnConfirm = document.getElementById('btn-confirm-import');
+  if (btnConfirm) btnConfirm.disabled = true;
+
+  const btnText = document.getElementById('btn-confirm-import-text');
+  if (btnText) btnText.innerText = 'ইমপোর্ট সম্পন্ন করুন';
+}
+
+// Handle file selection (Excel or CSV)
+function handleCollectionsFileSelect(event) {
+  const file = (event.target && event.target.files && event.target.files[0]) || (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]);
+  if (!file) return;
+
+  const fileNameBadge = document.getElementById('import-filename-badge');
+  if (fileNameBadge) fileNameBadge.innerText = `${file.name} (${Math.round(file.size / 1024)} KB)`;
+
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    try {
+      let rawData = [];
+      const data = new Uint8Array(e.target.result);
+
+      if (typeof XLSX !== 'undefined') {
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        rawData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+      } else {
+        const text = new TextDecoder('utf-8').decode(data);
+        rawData = parseCSVText(text);
+      }
+
+      processImportedRows(rawData);
+    } catch (err) {
+      console.error('File parsing error:', err);
+      showToast('ফাইল পড়তে সমস্যা হয়েছে: ' + err.message, 'error');
+    }
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+
+// Fallback CSV Parser
+function parseCSVText(csvText) {
+  const lines = csvText.split(/\r\n|\n/).filter(l => l.trim().length > 0);
+  if (lines.length < 2) return [];
+  const headers = lines[0].replace(/^\uFEFF/, '').split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+    const obj = {};
+    headers.forEach((h, idx) => {
+      obj[h] = cols[idx] !== undefined ? cols[idx] : '';
+    });
+    rows.push(obj);
+  }
+  return rows;
+}
+
+// Process, match and validate imported rows
+function processImportedRows(rawRows) {
+  if (!Array.isArray(rawRows) || rawRows.length === 0) {
+    showToast('ফাইলে কোন ডাটা পাওয়া যায়নি', 'error');
+    return;
+  }
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const validatedRows = [];
+
+  rawRows.forEach((row, index) => {
+    let memberIdRaw = '';
+    let memberNameRaw = '';
+    let dateRaw = '';
+    let savingsRaw = 0;
+    let fineRaw = 0;
+    let feeRaw = 0;
+    let remarksRaw = '';
+
+    for (const [key, val] of Object.entries(row)) {
+      const cleanKey = key.trim().toLowerCase();
+      if (cleanKey.includes('আইডি') || cleanKey.includes('memberid') || cleanKey === 'id' || cleanKey.includes('কোড')) {
+        memberIdRaw = String(val).trim();
+      } else if (cleanKey.includes('নাম') || cleanKey.includes('membername') || cleanKey === 'name') {
+        memberNameRaw = String(val).trim();
+      } else if (cleanKey.includes('তারিখ') || cleanKey.includes('date')) {
+        dateRaw = String(val).trim();
+      } else if (cleanKey.includes('সঞ্চয়') || cleanKey.includes('savings') || cleanKey.includes('জমা')) {
+        savingsRaw = Number(String(val).replace(/[^0-9.]/g, '')) || 0;
+      } else if (cleanKey.includes('জরিমানা') || cleanKey.includes('fine')) {
+        fineRaw = Number(String(val).replace(/[^0-9.]/g, '')) || 0;
+      } else if (cleanKey.includes('ফি') || cleanKey.includes('fee')) {
+        feeRaw = Number(String(val).replace(/[^0-9.]/g, '')) || 0;
+      } else if (cleanKey.includes('মন্তব্য') || cleanKey.includes('বিবরণ') || cleanKey.includes('remark')) {
+        remarksRaw = String(val).trim();
+      }
+    }
+
+    // Match member by Member ID or Member Name
+    let matchedMember = null;
+    if (memberIdRaw) {
+      matchedMember = AppState.members.find(m => 
+        (m.id && m.id.toLowerCase() === memberIdRaw.toLowerCase()) || 
+        (m._docId && m._docId === memberIdRaw)
+      );
+    }
+    if (!matchedMember && memberNameRaw) {
+      matchedMember = AppState.members.find(m => 
+        m.name && m.name.trim().toLowerCase() === memberNameRaw.toLowerCase()
+      );
+    }
+
+    let isValid = true;
+    let errorReason = '';
+
+    if (!matchedMember) {
+      isValid = false;
+      errorReason = 'সদস্য পাওয়া যায়নি';
+    } else if (savingsRaw <= 0) {
+      isValid = false;
+      errorReason = 'সঞ্চয় জমার পরিমাণ নেই';
+    }
+
+    const total = savingsRaw + fineRaw + feeRaw;
+
+    validatedRows.push({
+      rowNum: index + 1,
+      memberId: matchedMember ? (matchedMember.id || memberIdRaw) : (memberIdRaw || '–'),
+      memberName: matchedMember ? matchedMember.name : (memberNameRaw || 'অজ্ঞাত'),
+      memberObj: matchedMember,
+      date: dateRaw || todayStr,
+      savings: savingsRaw,
+      fine: fineRaw,
+      fee: feeRaw,
+      total,
+      remarks: remarksRaw || 'ফাইল ইমপোর্ট কিস্তি',
+      isValid,
+      errorReason
+    });
+  });
+
+  AppState.importPreviewRows = validatedRows;
+
+  // Render Preview Elements
+  const previewSection = document.getElementById('import-preview-section');
+  const dropzone = document.getElementById('import-dropzone');
+  const tbody = document.getElementById('import-preview-body');
+
+  const statTotal = document.getElementById('import-stat-total');
+  const statValid = document.getElementById('import-stat-valid');
+  const statInvalid = document.getElementById('import-stat-invalid');
+  const statAmount = document.getElementById('import-stat-amount');
+
+  const validCount = validatedRows.filter(r => r.isValid).length;
+  const invalidCount = validatedRows.length - validCount;
+  const totalAmount = validatedRows.filter(r => r.isValid).reduce((sum, r) => sum + r.total, 0);
+
+  if (statTotal) statTotal.innerText = `${formatBengaliNumber(validatedRows.length)} টি`;
+  if (statValid) statValid.innerText = `${formatBengaliNumber(validCount)} টি`;
+  if (statInvalid) statInvalid.innerText = `${formatBengaliNumber(invalidCount)} টি`;
+  if (statAmount) statAmount.innerText = `৳${formatBengaliNumber(totalAmount)}`;
+
+  if (tbody) {
+    tbody.innerHTML = '';
+    validatedRows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.className = r.isValid ? 'hover:bg-slate-50' : 'bg-rose-50/50 hover:bg-rose-50';
+      tr.innerHTML = `
+        <td class="py-2 px-2.5 font-semibold text-slate-500">${r.rowNum}</td>
+        <td class="py-2 px-2.5 font-mono text-[11px] font-bold ${r.isValid ? 'text-slate-800' : 'text-rose-600'}">${r.memberId}</td>
+        <td class="py-2 px-2.5 font-medium ${r.isValid ? 'text-slate-800' : 'text-rose-700'}">${r.memberName}</td>
+        <td class="py-2 px-2.5 text-slate-600">${r.date}</td>
+        <td class="py-2 px-2.5 text-right font-num font-bold text-slate-800">৳${formatBengaliNumber(r.savings)}</td>
+        <td class="py-2 px-2.5 text-right font-num text-slate-600">৳${formatBengaliNumber(r.fine)}</td>
+        <td class="py-2 px-2.5 text-right font-num text-slate-600">৳${formatBengaliNumber(r.fee)}</td>
+        <td class="py-2 px-2.5 text-right font-num font-bold text-emerald-700">৳${formatBengaliNumber(r.total)}</td>
+        <td class="py-2 px-2.5 text-center">
+          ${r.isValid ? 
+            '<span class="inline-flex px-1.5 py-0.5 rounded text-[10px] bg-emerald-100 text-emerald-800 font-bold">সঠিক</span>' : 
+            `<span class="inline-flex px-1.5 py-0.5 rounded text-[10px] bg-rose-100 text-rose-800 font-bold" title="${r.errorReason}">${r.errorReason}</span>`
+          }
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  if (dropzone) dropzone.classList.add('hidden');
+  if (previewSection) previewSection.classList.remove('hidden');
+
+  const btnConfirm = document.getElementById('btn-confirm-import');
+  const btnText = document.getElementById('btn-confirm-import-text');
+  if (btnConfirm) {
+    btnConfirm.disabled = validCount === 0;
+  }
+  if (btnText) {
+    btnText.innerText = validCount > 0 ? `${formatBengaliNumber(validCount)} টি কিস্তি ইমপোর্ট সম্পন্ন করুন` : 'কোন সঠিক এন্ট্রি নেই';
+  }
+}
+
+// Execute batch import into Firestore & local cache
+async function executeCollectionsImport() {
+  const validRows = (AppState.importPreviewRows || []).filter(r => r.isValid && r.memberObj);
+  if (validRows.length === 0) {
+    showToast('ইমপোর্ট করার মতো কোন বৈধ সারি নেই', 'error');
+    return;
+  }
+
+  const btnConfirm = document.getElementById('btn-confirm-import');
+  if (btnConfirm) {
+    btnConfirm.disabled = true;
+    btnConfirm.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>ইমপোর্ট হচ্ছে...</span>`;
+    if (window.lucide) lucide.createIcons();
+  }
+
+  let importedCount = 0;
+  try {
+    for (const row of validRows) {
+      const receiptId = 'REC-' + (AppState.collections.length + 101 + importedCount);
+      const newCollection = {
+        receiptId,
+        id: receiptId,
+        date: row.date,
+        memberId: row.memberId,
+        memberDocId: row.memberObj._docId || null,
+        memberName: row.memberName,
+        savings: row.savings,
+        fine: row.fine,
+        fee: row.fee,
+        total: row.total,
+        remarks: row.remarks
+      };
+
+      if (window.FirebaseService) {
+        await window.FirebaseService.addDoc('collections', newCollection);
+
+        const newSavings = (Number(row.memberObj.savings) || 0) + row.savings;
+        const newFine = (Number(row.memberObj.fine) || 0) + row.fine;
+        const newFee = (Number(row.memberObj.fee) || 0) + row.fee;
+        const newInstallments = (Number(row.memberObj.installments) || 0) + 1;
+
+        if (row.memberObj._docId) {
+          await window.FirebaseService.updateDoc('members', row.memberObj._docId, {
+            savings: newSavings,
+            fine: newFine,
+            fee: newFee,
+            installments: newInstallments
+          });
+        }
+        row.memberObj.savings = newSavings;
+        row.memberObj.fine = newFine;
+        row.memberObj.fee = newFee;
+        row.memberObj.installments = newInstallments;
+      } else {
+        AppState.collections.unshift(newCollection);
+        row.memberObj.savings = (Number(row.memberObj.savings) || 0) + row.savings;
+        row.memberObj.fine = (Number(row.memberObj.fine) || 0) + row.fine;
+        row.memberObj.fee = (Number(row.memberObj.fee) || 0) + row.fee;
+        row.memberObj.installments = (Number(row.memberObj.installments) || 0) + 1;
+      }
+      importedCount++;
+    }
+
+    if (!window.FirebaseService) {
+      setLocalCache(CACHE_KEYS.collections, AppState.collections);
+      setLocalCache(CACHE_KEYS.members, AppState.members);
+    }
+
+    closeModal('importCollectionsModal');
+    resetImportModal();
+    renderAll();
+    showToast(`${formatBengaliNumber(importedCount)} টি কিস্তি সফলভাবে ইমপোর্ট ও সংরক্ষণ করা হয়েছে!`);
+  } catch (err) {
+    console.error('Import error:', err);
+    showToast('ইমপোর্টে সমস্যা হয়েছে: ' + err.message, 'error');
+  } finally {
+    if (btnConfirm) {
+      btnConfirm.disabled = false;
+      btnConfirm.innerHTML = `<i data-lucide="check-check" class="w-4 h-4"></i><span>ইমপোর্ট সম্পন্ন করুন</span>`;
+      if (window.lucide) lucide.createIcons();
+    }
+  }
+}
+
 // 3. Local Instant Snapshot (অফলাইন দ্রুত স্ন্যাপশট সংরক্ষণ)
 function saveLocalSnapshot() {
   const snapshots = getLocalCache(CACHE_KEYS.snapshots, []);
@@ -1569,38 +1987,100 @@ async function triggerCloudSeed() {
   }
 }
 
-// Authentication Logic
+// Toggle Password Visibility
+function togglePasswordVisibility(inputId, iconId) {
+  const input = document.getElementById(inputId);
+  const icon = document.getElementById(iconId);
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    if (icon) icon.setAttribute('data-lucide', 'eye-off');
+  } else {
+    input.type = 'password';
+    if (icon) icon.setAttribute('data-lucide', 'eye');
+  }
+  if (window.lucide) lucide.createIcons();
+}
+
+// Authentication Logic (Handles both Gate screen and Modal)
 async function handleAdminLogin(e) {
   e.preventDefault();
-  const email = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value;
-  const errorEl = document.getElementById('login-error-msg');
-  const btn = document.getElementById('login-submit-btn');
+  
+  // Support both gate form and popup modal form
+  const emailInput = document.getElementById('gate-login-email') || document.getElementById('login-email');
+  const passInput = document.getElementById('gate-login-password') || document.getElementById('login-password');
+  const email = (emailInput ? emailInput.value : '').trim();
+  const password = passInput ? passInput.value : '';
+
+  const gateError = document.getElementById('gate-login-error');
+  const gateErrorText = document.getElementById('gate-login-error-text');
+  const modalError = document.getElementById('login-error-msg');
+  const submitBtn = document.getElementById('gate-login-submit-btn') || document.getElementById('login-submit-btn');
+
+  const setError = (msg) => {
+    if (gateError && gateErrorText) {
+      gateErrorText.innerText = msg;
+      gateError.classList.remove('hidden');
+    }
+    if (modalError) modalError.innerText = msg;
+  };
+
+  const clearError = () => {
+    if (gateError) gateError.classList.add('hidden');
+    if (modalError) modalError.innerText = '';
+  };
 
   if (!email || !password) {
-    if (errorEl) errorEl.innerText = 'ইমেইল ও পাসওয়ার্ড পূরণ করুন';
+    setError('অনুগ্রহ করে সঠিক ইমেইল ও পাসওয়ার্ড পূরণ করুন');
     return;
   }
 
   try {
-    btn.disabled = true;
-    btn.innerText = 'লগইন হচ্ছে...';
-    if (errorEl) errorEl.innerText = '';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>লগইন হচ্ছে...</span>`;
+      if (window.lucide) lucide.createIcons();
+    }
+    clearError();
 
-    await window.FirebaseService.signIn(email, password);
+    let loggedInUser = null;
+    if (window.FirebaseService) {
+      const userCredential = await window.FirebaseService.signIn(email, password);
+      loggedInUser = userCredential.user;
+    } else {
+      loggedInUser = { email };
+    }
+
+    AppState.currentUser = loggedInUser;
     AppState.isDemoAdmin = false;
     localStorage.removeItem(CACHE_KEYS.authDemo);
-    showToast('সফলভাবে লগইন হয়েছে!');
+
+    updateAuthUI(AppState.currentUser);
     closeModal('authModal');
-    document.getElementById('loginForm').reset();
+    renderAll();
+    showToast('স্বাগতম! সফলভাবে সিস্টেমে লগইন সম্পন্ন হয়েছে।');
+
+    const form1 = document.getElementById('gateLoginForm');
+    const form2 = document.getElementById('loginForm');
+    if (form1) form1.reset();
+    if (form2) form2.reset();
   } catch (err) {
     console.error('Login error:', err);
-    if (errorEl) {
-      errorEl.innerText = 'ভুল ইমেইল বা পাসওয়ার্ড: ' + err.message;
+    let errorMsg = 'ভুল ইমেইল বা পাসওয়ার্ড। আবার চেষ্টা করুন।';
+    if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+      errorMsg = 'ভুল ইমেইল অথবা পাসওয়ার্ড দেওয়া হয়েছে।';
+    } else if (err.code === 'auth/too-many-requests') {
+      errorMsg = 'অতিরিক্ত ভুল চেষ্টার কারণে সাময়িক স্থগিত। কিছুক্ষণ পর চেষ্টা করুন।';
+    } else if (err.message) {
+      errorMsg = err.message;
     }
+    setError(errorMsg);
   } finally {
-    btn.disabled = false;
-    btn.innerText = 'লগইন করুন';
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `<i data-lucide="log-in" class="w-4 h-4"></i><span>লগইন করে ড্যাশবোর্ডে প্রবেশ করুন</span>`;
+      if (window.lucide) lucide.createIcons();
+    }
   }
 }
 
@@ -1609,13 +2089,34 @@ function loginAsDemoAdmin() {
   AppState.isDemoAdmin = true;
   AppState.currentUser = { email: 'demo.admin@somiti.org', displayName: 'ডেমো পরিচালক' };
   localStorage.setItem(CACHE_KEYS.authDemo, 'true');
+
+  // If local state is empty, populate from default society seed data
+  if (AppState.members.length === 0 && window.SEED_DATA) {
+    AppState.members = JSON.parse(JSON.stringify(window.SEED_DATA.members || []));
+    AppState.investments = JSON.parse(JSON.stringify(window.SEED_DATA.investments || []));
+    AppState.profits = JSON.parse(JSON.stringify(window.SEED_DATA.profits || []));
+    AppState.expenses = JSON.parse(JSON.stringify(window.SEED_DATA.expenses || []));
+    AppState.otherIncome = JSON.parse(JSON.stringify(window.SEED_DATA.otherIncome || []));
+    AppState.collections = JSON.parse(JSON.stringify(window.SEED_DATA.collections || []));
+
+    setLocalCache(CACHE_KEYS.members, AppState.members);
+    setLocalCache(CACHE_KEYS.investments, AppState.investments);
+    setLocalCache(CACHE_KEYS.profits, AppState.profits);
+    setLocalCache(CACHE_KEYS.expenses, AppState.expenses);
+    setLocalCache(CACHE_KEYS.otherIncome, AppState.otherIncome);
+    setLocalCache(CACHE_KEYS.collections, AppState.collections);
+  }
+
   updateAuthUI(AppState.currentUser);
   closeModal('authModal');
+  renderAll();
   showToast('ডেমো পরিচালক মোডে সফলভাবে প্রবেশ করেছেন!', 'success');
 }
 
+// Logout & Lock Portal
 async function handleAdminLogout() {
   AppState.isDemoAdmin = false;
+  AppState.currentUser = null;
   localStorage.removeItem(CACHE_KEYS.authDemo);
   try {
     if (window.FirebaseService) {
@@ -1623,18 +2124,27 @@ async function handleAdminLogout() {
     }
   } catch (err) {}
   updateAuthUI(null);
-  showToast('লগআউট সফল হয়েছে', 'info');
+  showToast('সফলভাবে লগআউট সম্পন্ন হয়েছে', 'info');
 }
 
-// Update UI on Auth State Change
+// Update UI and Gate visibility on Auth State Change
 function updateAuthUI(user) {
-  AppState.currentUser = user || (AppState.isDemoAdmin ? { email: 'demo.admin@somiti.org' } : null);
+  AppState.currentUser = user || (AppState.isDemoAdmin ? { email: 'demo.admin@somiti.org', displayName: 'ডেমো পরিচালক' } : null);
+
+  const authGate = document.getElementById('auth-gate-screen');
+  const appLayout = document.getElementById('app-layout');
   const userStatusBadge = document.getElementById('user-status-badge');
   const userEmailDisplay = document.getElementById('user-email-display');
   const loginTriggerBtn = document.getElementById('login-trigger-btn');
   const logoutTriggerBtn = document.getElementById('logout-trigger-btn');
 
   if (AppState.currentUser) {
+    // Authenticated: Hide gate, unlock and show app layout
+    if (authGate) authGate.classList.add('hidden');
+    if (appLayout) {
+      appLayout.classList.remove('hidden');
+      appLayout.classList.add('flex');
+    }
     if (userStatusBadge) {
       userStatusBadge.classList.remove('hidden');
       userStatusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> অ্যাডমিন সচল`;
@@ -1643,11 +2153,17 @@ function updateAuthUI(user) {
     if (loginTriggerBtn) loginTriggerBtn.classList.add('hidden');
     if (logoutTriggerBtn) logoutTriggerBtn.classList.remove('hidden');
   } else {
+    // Unauthenticated: Lock app layout, show login screen only
+    if (authGate) authGate.classList.remove('hidden');
+    if (appLayout) {
+      appLayout.classList.add('hidden');
+      appLayout.classList.remove('flex');
+    }
     if (userStatusBadge) {
       userStatusBadge.classList.remove('hidden');
-      userStatusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-400"></span> ভিউয়ার মোড`;
+      userStatusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-400"></span> লক করা`;
     }
-    if (userEmailDisplay) userEmailDisplay.innerText = 'সাধারণ ভিউয়ার';
+    if (userEmailDisplay) userEmailDisplay.innerText = 'লগইন করা নেই';
     if (loginTriggerBtn) loginTriggerBtn.classList.remove('hidden');
     if (logoutTriggerBtn) logoutTriggerBtn.classList.add('hidden');
   }
@@ -1748,6 +2264,30 @@ window.addEventListener('DOMContentLoaded', () => {
 
   if (AppState.isDemoAdmin) {
     updateAuthUI({ email: 'demo.admin@somiti.org' });
+  } else {
+    updateAuthUI(null);
+  }
+
+  // Setup drag-and-drop listener for import dropzone
+  const dropzone = document.getElementById('import-dropzone');
+  if (dropzone) {
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.add('border-emerald-500', 'bg-emerald-50/50');
+      }, false);
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.remove('border-emerald-500', 'bg-emerald-50/50');
+      }, false);
+    });
+    dropzone.addEventListener('drop', (e) => {
+      handleCollectionsFileSelect(e);
+    }, false);
   }
 
   // Keyboard Shortcuts: Ctrl+K or / focuses search, Alt+N new member, Alt+C collection
@@ -1817,4 +2357,12 @@ window.triggerCloudSeed = triggerCloudSeed;
 window.handleAdminLogin = handleAdminLogin;
 window.loginAsDemoAdmin = loginAsDemoAdmin;
 window.handleAdminLogout = handleAdminLogout;
+window.togglePasswordVisibility = togglePasswordVisibility;
+window.renderDashboardInvestments = renderDashboardInvestments;
+window.toggleTemplateDropdown = toggleTemplateDropdown;
+window.downloadCollectionTemplate = downloadCollectionTemplate;
+window.openImportCollectionsModal = openImportCollectionsModal;
+window.resetImportModal = resetImportModal;
+window.handleCollectionsFileSelect = handleCollectionsFileSelect;
+window.executeCollectionsImport = executeCollectionsImport;
 window.AppState = AppState;

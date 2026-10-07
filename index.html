@@ -40,6 +40,9 @@
   <!-- Chart.js for Dynamic Visual Analytics -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+  <!-- SheetJS for Excel (.xlsx, .xls) and CSV parsing & export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -47,34 +50,121 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 
-<body class="h-full text-slate-800 flex flex-col md:flex-row antialiased select-none">
+<body class="h-full text-slate-800 antialiased select-none bg-slate-950">
 
   <!-- Toast Notification Container -->
   <div id="toast-container"></div>
 
-  <!-- Mobile Top Bar (Shown only on small screens) -->
-  <div class="no-print md:hidden bg-slate-900 text-white px-4 py-3 flex items-center justify-between border-b border-slate-800 sticky top-0 z-30 shadow-md">
-    <div class="flex items-center space-x-2.5 space-x-reverse">
-      <div class="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white">
-        <i data-lucide="landmark" class="w-5 h-5"></i>
+  <!-- ========================================== -->
+  <!-- AUTH GATE SCREEN (Must login to view data) -->
+  <!-- ========================================== -->
+  <div id="auth-gate-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 p-4 overflow-y-auto">
+    <!-- Ambient glowing backdrop effect -->
+    <div class="absolute -top-40 -right-40 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="relative w-full max-w-md bg-slate-900/90 backdrop-blur-xl border border-emerald-500/20 shadow-2xl shadow-emerald-950/60 rounded-3xl p-6 sm:p-8 space-y-6 text-slate-100 animate-scale-in">
+      
+      <!-- Brand & Header -->
+      <div class="text-center space-y-2">
+        <div class="inline-flex w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-600 to-emerald-400 items-center justify-center text-white shadow-lg shadow-emerald-600/30 mb-1">
+          <i data-lucide="landmark" class="w-8 h-8"></i>
+        </div>
+        <h1 class="text-2xl font-bold tracking-tight text-white">অগ্রযাত্রা সমবায় সমিতি</h1>
+        <p class="text-xs text-emerald-400 font-medium">সঞ্চয়, বিনিয়োগ ও ক্লাউড হিসাব সফটওয়্যার</p>
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[11px] text-emerald-300 font-semibold mt-1">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-400"></i>
+          <span>সুরক্ষিত পোর্টাল • পূর্বে লগইন করা বাধ্যতামূলক</span>
+        </div>
       </div>
-      <div>
-        <h1 class="text-sm font-bold text-white">অগ্রযাত্রা সমবায়</h1>
-        <p class="text-[10px] text-emerald-400">Somiti Cloud</p>
+
+      <!-- Login Form -->
+      <form onsubmit="handleAdminLogin(event)" id="gateLoginForm" class="space-y-4 text-sm">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">অ্যাডমিন / পরিচালক ইমেইল</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+              <i data-lucide="mail" class="w-4 h-4"></i>
+            </span>
+            <input type="email" id="gate-login-email" required placeholder="akterozzamankhan@gmail.com" class="w-full pl-9 pr-3 py-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">পাসওয়ার্ড</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+              <i data-lucide="lock" class="w-4 h-4"></i>
+            </span>
+            <input type="password" id="gate-login-password" required placeholder="••••••••" class="w-full pl-9 pr-10 py-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition" />
+            <button type="button" onclick="togglePasswordVisibility('gate-login-password', 'gate-pwd-toggle-icon')" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-200 transition">
+              <i id="gate-pwd-toggle-icon" data-lucide="eye" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Error Container -->
+        <div id="gate-login-error" class="hidden p-3 bg-rose-950/50 border border-rose-500/30 text-rose-200 rounded-xl text-xs font-medium flex items-center gap-2">
+          <i data-lucide="alert-circle" class="w-4 h-4 text-rose-400 flex-shrink-0"></i>
+          <span id="gate-login-error-text"></span>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="gate-login-submit-btn" class="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-semibold rounded-xl shadow-lg shadow-emerald-900/40 transition flex items-center justify-center gap-2">
+          <i data-lucide="log-in" class="w-4 h-4"></i>
+          <span>লগইন করে ড্যাশবোর্ডে প্রবেশ করুন</span>
+        </button>
+
+        <div class="relative flex py-1 items-center">
+          <div class="flex-grow border-t border-slate-800"></div>
+          <span class="flex-shrink mx-3 text-slate-500 text-[11px]">অথবা দ্রুত টেস্ট করতে</span>
+          <div class="flex-grow border-t border-slate-800"></div>
+        </div>
+
+        <!-- 1-Click Demo Login -->
+        <button type="button" onclick="loginAsDemoAdmin()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 hover:text-emerald-300 font-semibold rounded-xl border border-slate-700 text-xs transition flex items-center justify-center gap-2">
+          <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
+          <span>১-ক্লিকে ডেমো অ্যাডমিন হিসেবে প্রবেশ (Instant Demo)</span>
+        </button>
+      </form>
+
+      <div class="text-center text-[11px] text-slate-500 pt-2 border-t border-slate-800/80">
+        অগ্রযাত্রা সঞ্চয় ও ঋণদান সমবায় সমিতি লিঃ &bull; ক্লাউড ডাটাবেস এনক্রিপ্টেড
       </div>
-    </div>
-    <div class="flex items-center gap-1.5">
-      <button onclick="openModal('memberPortalModal')" class="bg-slate-800 p-2 rounded-lg text-emerald-400" title="সদস্য অনুসন্ধান">
-        <i data-lucide="search" class="w-4 h-4"></i>
-      </button>
-      <button onclick="openModal('collectionModal')" class="bg-emerald-600 p-2 rounded-lg text-white" title="কিস্তি জমা">
-        <i data-lucide="plus-circle" class="w-4 h-4"></i>
-      </button>
-      <button onclick="toggleMobileMenu()" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-200">
-        <i data-lucide="menu" class="w-5 h-5"></i>
-      </button>
     </div>
   </div>
+
+  <!-- ============================================== -->
+  <!-- MAIN APP LAYOUT (Hidden until user logs in)   -->
+  <!-- ============================================== -->
+  <div id="app-layout" class="hidden min-h-screen md:h-full flex flex-col md:flex-row antialiased w-full bg-slate-100">
+
+    <!-- Mobile Top Bar (Shown only on small screens) -->
+    <div class="no-print md:hidden bg-slate-900 text-white px-4 py-3 flex items-center justify-between border-b border-slate-800 sticky top-0 z-30 shadow-md">
+      <div class="flex items-center space-x-2.5 space-x-reverse">
+        <div class="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white">
+          <i data-lucide="landmark" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h1 class="text-sm font-bold text-white">অগ্রযাত্রা সমবায়</h1>
+          <p class="text-[10px] text-emerald-400">Somiti Cloud</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <button onclick="openModal('memberPortalModal')" class="bg-slate-800 p-2 rounded-lg text-emerald-400" title="সদস্য অনুসন্ধান">
+          <i data-lucide="search" class="w-4 h-4"></i>
+        </button>
+        <button onclick="openModal('collectionModal')" class="bg-emerald-600 p-2 rounded-lg text-white" title="কিস্তি জমা">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+        </button>
+        <button onclick="handleAdminLogout()" class="bg-rose-950/60 border border-rose-700/60 p-2 rounded-lg text-rose-300 hover:text-rose-100" title="লগআউট">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+        </button>
+        <button onclick="toggleMobileMenu()" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-200">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
 
   <!-- Navigation Sidebar -->
   <aside id="main-sidebar" class="no-print hidden md:flex w-full md:w-64 bg-slate-900 text-white flex-shrink-0 flex-col justify-between shadow-2xl z-20 transition-all">
@@ -356,34 +446,43 @@
             </div>
           </div>
 
-          <!-- Investment Overview Breakdown -->
+          <!-- Investment Overview Breakdown (100% Dynamic User Data) -->
           <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between">
             <div>
-              <h3 class="font-bold text-slate-800 flex items-center gap-2 mb-3">
-                <i data-lucide="pie-chart" class="w-5 h-5 text-amber-500"></i>
-                বিনিয়োগ ও তহবিলের হিসাব
-              </h3>
-              <div class="space-y-3 text-sm">
-                <div class="p-3 bg-amber-50/70 border border-amber-100 rounded-xl">
-                  <div class="text-xs text-amber-800 font-medium">জমি ও বন্ধকী মূলধন</div>
-                  <div class="text-base font-bold text-amber-900 mt-0.5">১৮ গন্ডা জমি ও দোকান বন্ধক</div>
-                  <div class="text-xs text-amber-700 mt-0.5">নিরাপদ জামানতযুক্ত তহবিল</div>
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                  <i data-lucide="pie-chart" class="w-5 h-5 text-amber-500"></i>
+                  <span>বিনিয়োগ ও তহবিলের হিসাব</span>
+                </h3>
+                <span id="dash-inv-count-badge" class="px-2.5 py-0.5 bg-amber-50 text-amber-700 font-bold text-xs rounded-full border border-amber-200">
+                  ০ টি খাত
+                </span>
+              </div>
+
+              <!-- Quick Fund Summary Metrics -->
+              <div class="grid grid-cols-2 gap-2 mb-3.5 text-xs">
+                <div class="p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl">
+                  <div class="text-[11px] text-slate-500 font-medium">মোট মূলধন বিনিয়োগ</div>
+                  <div id="dash-total-inv-amount" class="text-sm font-bold text-slate-800 font-num mt-0.5">৳০</div>
                 </div>
-                <div class="p-3 bg-emerald-50/70 border border-emerald-100 rounded-xl">
-                  <div class="text-xs text-emerald-800 font-medium">কৃষি ও চাষাবাদ বিনিয়োগ</div>
-                  <div class="text-base font-bold text-emerald-900 mt-0.5">মৌসুমি ফসল উৎপাদন</div>
-                  <div class="text-xs text-emerald-700 mt-0.5">হাল চাষ, সার, বীজ ও শ্রম বিনিয়োগ</div>
-                </div>
-                <div class="p-3 bg-blue-50/70 border border-blue-100 rounded-xl">
-                  <div class="text-xs text-blue-800 font-medium">অর্জিত আয় ও ভাড়া</div>
-                  <div class="text-base font-bold text-blue-900 mt-0.5">দোকান ভাড়া ও ধান বিক্রয়</div>
-                  <div class="text-xs text-blue-700 mt-0.5">সমিতির তহবিলের সাথে সমন্বিত</div>
+                <div class="p-2.5 bg-emerald-50/70 border border-emerald-100 rounded-xl">
+                  <div class="text-[11px] text-emerald-700 font-medium">মোট মূলধন আদায়</div>
+                  <div id="dash-total-inv-recovered" class="text-sm font-bold text-emerald-800 font-num mt-0.5">৳০</div>
                 </div>
               </div>
+
+              <!-- Dynamic User Investment Breakdown List -->
+              <div id="dashboard-investments-container" class="space-y-2.5 max-h-[290px] overflow-y-auto pr-1">
+                <!-- Populated dynamically via JS using exact AppState.investments user records -->
+              </div>
             </div>
-            <div class="mt-4 pt-3 border-t border-slate-100">
-              <button onclick="switchTab('investments')" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs rounded-lg transition text-center">
-                বিস্তারিত বিনিয়োগ হিসাব খুলুন
+
+            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2">
+              <button onclick="openModal('investmentModal')" class="flex-1 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 font-semibold text-xs rounded-lg transition text-center flex items-center justify-center gap-1">
+                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> নতুন বিনিয়োগ
+              </button>
+              <button onclick="switchTab('investments')" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs rounded-lg transition text-center">
+                বিস্তারিত বিনিয়োগ &rarr;
               </button>
             </div>
           </div>
@@ -548,10 +647,38 @@
                 <h3 class="text-base font-bold text-slate-800">সর্বশেষ কিস্তি আদায়ের বিবরণ</h3>
                 <p class="text-xs text-slate-500">জমার রিয়েলটাইম তালিকা ও রশিদ প্রিন্ট করার অপশন</p>
               </div>
-              <div class="flex items-center gap-2">
-                <button onclick="exportCollectionsCSV()" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1">
-                  <i data-lucide="download" class="w-3.5 h-3.5"></i> CSV
+              <div class="flex flex-wrap items-center gap-2">
+                <!-- Import Button -->
+                <button onclick="openImportCollectionsModal()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition" title="এক্সেল বা সিএসভি ফাইল থেকে কিস্তি ইমপোর্ট">
+                  <i data-lucide="file-up" class="w-3.5 h-3.5"></i>
+                  <span>ফাইল ইমপোর্ট</span>
                 </button>
+
+                <!-- Template Download Dropdown -->
+                <div class="relative inline-block text-left" id="template-dropdown-wrapper">
+                  <button type="button" onclick="toggleTemplateDropdown()" class="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition" title="নমুনা ফরম্যাট ডাউনলোড করুন">
+                    <i data-lucide="file-down" class="w-3.5 h-3.5 text-blue-600"></i>
+                    <span>নমুনা ফাইল</span>
+                    <i data-lucide="chevron-down" class="w-3 h-3 text-blue-500"></i>
+                  </button>
+                  <div id="template-dropdown-menu" class="hidden absolute right-0 mt-1.5 w-48 bg-white border border-slate-200 rounded-xl shadow-xl z-30 py-1 text-xs divide-y divide-slate-100 animate-scale-in">
+                    <button type="button" onclick="downloadCollectionTemplate('excel')" class="w-full text-left px-3 py-2 hover:bg-emerald-50 text-slate-700 flex items-center gap-2">
+                      <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600"></i>
+                      <span>নমুনা Excel (.xlsx)</span>
+                    </button>
+                    <button type="button" onclick="downloadCollectionTemplate('csv')" class="w-full text-left px-3 py-2 hover:bg-emerald-50 text-slate-700 flex items-center gap-2">
+                      <i data-lucide="file-text" class="w-3.5 h-3.5 text-blue-600"></i>
+                      <span>নমুনা CSV (.csv)</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Export CSV -->
+                <button onclick="exportCollectionsCSV()" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1 transition" title="সব কিস্তি CSV ডাউনলোড">
+                  <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                  <span>এক্সপোর্ট</span>
+                </button>
+
                 <span id="collection-count-badge" class="px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full">০ টি এন্ট্রি</span>
               </div>
             </div>
@@ -940,6 +1067,7 @@
 
     </div>
   </main>
+  </div> <!-- /#app-layout -->
 
   <!-- ==================== MODALS ==================== -->
 
@@ -1494,10 +1622,138 @@
           <input type="number" id="inc-amount" required min="1" step="any" placeholder="যেমন: ১০৭.৮৬" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
         </div>
         <div class="flex justify-end gap-2 pt-2">
-          <button type="button" onclick="closeModal('incomeModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg">বাতিল</button>
-          <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg">সংরক্ষণ করুন</button>
+  <!-- MODAL: Import Collections from CSV/Excel -->
+  <div id="importCollectionsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-100 animate-scale-in">
+      
+      <!-- Modal Header -->
+      <div class="px-6 py-4 bg-gradient-to-r from-emerald-800 to-slate-900 text-white flex justify-between items-center flex-shrink-0">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-emerald-300">
+            <i data-lucide="file-spreadsheet" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base">সঞ্চয় ও কিস্তি আদায় ফাইল ইমপোর্ট</h3>
+            <p class="text-[11px] text-emerald-300">Excel (.xlsx, .xls) অথবা CSV ফাইল থেকে এক ক্লিকে কিস্তি জমা</p>
+          </div>
         </div>
-      </form>
+        <button onclick="closeModal('importCollectionsModal')" class="text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="p-6 space-y-5 overflow-y-auto flex-1 text-sm">
+        
+        <!-- Step 1: Guidance & Template Download -->
+        <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h4 class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                <i data-lucide="info" class="w-4 h-4 text-blue-600"></i>
+                ফাইল তৈরির নিয়মাবলী ও কলাম ফরম্যাট
+              </h4>
+              <p class="text-xs text-slate-600 mt-1">
+                আপনার ফাইলে অবশ্যই <code class="bg-white px-1.5 py-0.5 rounded border border-slate-200 text-slate-800 font-semibold">সদস্য আইডি</code> এবং <code class="bg-white px-1.5 py-0.5 rounded border border-slate-200 text-slate-800 font-semibold">সঞ্চয় জমা</code> কলাম থাকতে হবে। তারিখ খালি থাকলে আজকের তারিখ নির্ধারণ হবে।
+              </p>
+            </div>
+            <div class="flex flex-col gap-1.5 flex-shrink-0">
+              <button type="button" onclick="downloadCollectionTemplate('excel')" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span>নমুনা Excel ফাইল</span>
+              </button>
+              <button type="button" onclick="downloadCollectionTemplate('csv')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span>নমুনা CSV ফাইল</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Upload Dropzone -->
+        <div id="import-dropzone" onclick="document.getElementById('collection-file-input').click()" class="border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-2xl p-6 text-center cursor-pointer transition bg-slate-50/50 hover:bg-emerald-50/30 group">
+          <input type="file" id="collection-file-input" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleCollectionsFileSelect(event)" />
+          <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition">
+            <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+          </div>
+          <div class="text-sm font-bold text-slate-800">
+            এখানে আপনার Excel বা CSV ফাইল ড্রপ করুন অথবা <span class="text-emerald-600 underline">ব্রাউজ করুন</span>
+          </div>
+          <div class="text-xs text-slate-400 mt-1">
+            সমর্থিত ফরম্যাট: .xlsx, .xls, .csv (সর্বোচ্চ ৫ মেগাবাইট)
+          </div>
+        </div>
+
+        <!-- Step 3: Parse Preview (Hidden until file selected) -->
+        <div id="import-preview-section" class="hidden space-y-4">
+          
+          <!-- Summary Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+              <span class="text-slate-500 block">মোট সারি</span>
+              <span id="import-stat-total" class="text-base font-bold text-slate-800 font-num">০</span>
+            </div>
+            <div class="p-3 bg-emerald-50 border border-emerald-100 rounded-xl">
+              <span class="text-emerald-700 block">সঠিক এন্ট্রি</span>
+              <span id="import-stat-valid" class="text-base font-bold text-emerald-700 font-num">০ টি</span>
+            </div>
+            <div class="p-3 bg-rose-50 border border-rose-100 rounded-xl">
+              <span class="text-rose-700 block">ত্রুটি / বাদ পড়া</span>
+              <span id="import-stat-invalid" class="text-base font-bold text-rose-700 font-num">০ টি</span>
+            </div>
+            <div class="p-3 bg-blue-50 border border-blue-100 rounded-xl">
+              <span class="text-blue-700 block">মোট জমার পরিমাণ</span>
+              <span id="import-stat-amount" class="text-base font-bold text-blue-700 font-num">৳০</span>
+            </div>
+          </div>
+
+          <!-- Preview Table -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h5 class="text-xs font-bold text-slate-700">ফাইল ডাটা প্রিভিউ ও যাচাইকরণ:</h5>
+              <span id="import-filename-badge" class="text-[11px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded font-mono"></span>
+            </div>
+            <div class="overflow-x-auto max-h-56 border border-slate-200 rounded-xl">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead class="bg-slate-50 sticky top-0 border-b border-slate-200">
+                  <tr class="text-slate-600 font-semibold">
+                    <th class="py-2 px-2.5">নং</th>
+                    <th class="py-2 px-2.5">সদস্য আইডি</th>
+                    <th class="py-2 px-2.5">সদস্যের নাম</th>
+                    <th class="py-2 px-2.5">তারিখ</th>
+                    <th class="py-2 px-2.5 text-right">সঞ্চয়</th>
+                    <th class="py-2 px-2.5 text-right">জরিমানা</th>
+                    <th class="py-2 px-2.5 text-right">ফি</th>
+                    <th class="py-2 px-2.5 text-right">মোট</th>
+                    <th class="py-2 px-2.5 text-center">স্ট্যাটাস</th>
+                  </tr>
+                </thead>
+                <tbody id="import-preview-body" class="divide-y divide-slate-100">
+                  <!-- Populated dynamically via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-between items-center flex-shrink-0">
+        <button type="button" onclick="resetImportModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-semibold transition">
+          রিসেট / নতুন ফাইল
+        </button>
+        <div class="flex gap-2">
+          <button type="button" onclick="closeModal('importCollectionsModal')" class="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold transition">
+            বাতিল
+          </button>
+          <button type="button" id="btn-confirm-import" onclick="executeCollectionsImport()" disabled class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center gap-1.5">
+            <i data-lucide="check-check" class="w-4 h-4"></i>
+            <span id="btn-confirm-import-text">ইমপোর্ট সম্পন্ন করুন</span>
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 

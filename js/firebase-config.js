@@ -76,6 +76,9 @@ export const SEED_DATA = {
   ]
 };
 
+// Expose default seed data globally
+window.SEED_DATA = SEED_DATA;
+
 // Global Firebase Service helper
 window.FirebaseService = {
   auth,
